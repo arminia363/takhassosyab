@@ -386,7 +386,7 @@ var CFG = {"key": "employer", "title": "\u062A\u062E\u0635\u0635\u200C\u06CC\u06
       if (fd.type === "title"){ v = titleText(fd); if (v) L.push(lab + " " + v); }
       else if (fd.type === "industry"){ v = industryName(); if (v) L.push(lab + " " + v); }
       else if (fd.type === "text" || fd.type === "link"){ v = trim(state.v[fd.id]); if (v) L.push(lab + " " + v); }
-      else if (fd.type === "contact"){ v = trim(toEn(state.v[fd.id] || "")); if (v) L.push(lab + " " + v); }
+      else if (fd.type === "contact"){ v = contactLink(state.v[fd.id]); if (v) L.push(lab + " " + v); }
       else if (fd.type === "city"){ v = trim(state.v[fd.id]); var a = trim(state.v[fd.id + "_area"]); if (v || a) L.push(lab + " " + v + (v && a ? "\u060C " : "") + a); }
       else if (fd.type === "coop"){ if (state.coop.length){ var sel = []; for (var j = 0; j < fd.opts.length; j++) if (indexOf(state.coop, fd.opts[j]) > -1) sel.push(fd.opts[j]); L.push(lab + " " + sel.join(" / ")); } }
       else if (fd.type === "salary"){ v = salaryText(); if (v) L.push(lab + " " + v); }
@@ -649,7 +649,7 @@ var CFG = {"key": "employer", "title": "\u062A\u062E\u0635\u0635\u200C\u06CC\u06
     parts = []; if (d.age) parts.push(d.age); if (d.military) parts.push("\u0646\u0638\u0627\u0645 \u0648\u0638\u06CC\u0641\u0647: " + d.military);
     if (parts.length) tail.push("\u2139\uFE0F " + parts.join(" | "));
     if (d.link) tail.push("\uD83D\uDD17 " + d.link);
-    if (d.contact) tail.push("\uD83D\uDCDE \u062A\u0645\u0627\u0633: " + d.contact);
+    if (d.contact) tail.push("\uD83D\uDCDE \u062A\u0645\u0627\u0633: " + contactLink(d.contact));
     if (tail.length){ L.push(""); for (i = 0; i < tail.length; i++) L.push(tail[i]); }
     L.push("", "\uD83C\uDD94 @JobVacencies");
     return L.join("\n");
@@ -667,6 +667,7 @@ var CFG = {"key": "employer", "title": "\u062A\u062E\u0635\u0635\u200C\u06CC\u06
     setDir(c, "rtl"); c.textBaseline = "middle";
     /* brand + label */
     c.fillStyle = T.fg; c.textAlign = "right"; fnt(c, "bold", 40); c.fillText("\u062A\u062E\u0635\u0635\u200C\u06CC\u0627\u0628", 1010, 70);
+    drawHandle(c, 1010 - c.measureText("\u062A\u062E\u0635\u0635\u200C\u06CC\u0627\u0628").width, 72, 30, T.fg);
     fnt(c, "bold", 34); var lw = c.measureText(CFG.bannerLabel).width + 48;
     c.fillStyle = T.accent; rr(c, 70, 40, lw, 60, 30); c.fill(); c.fillStyle = T.accentText; c.textAlign = "center"; c.fillText(CFG.bannerLabel, 70 + lw / 2, 71);
     if (d.urgent){ var uw = c.measureText("\u0641\u0648\u0631\u06CC").width + 48; c.fillStyle = "#ff3b30"; rr(c, 70 + lw + 12, 40, uw, 60, 30); c.fill(); c.fillStyle = "#fff"; c.fillText("\u0641\u0648\u0631\u06CC", 70 + lw + 12 + uw / 2, 71); }
@@ -741,7 +742,8 @@ var CFG = {"key": "employer", "title": "\u062A\u062E\u0635\u0635\u200C\u06CC\u06
     for (i = 0; i < extra.length && y + 44 < LIMIT; i++){ c.textAlign = "right"; fnt(c, "normal", 29); c.fillStyle = mute; c.fillText(fit(c, extra[i], 940), 1010, y); y += 44; }
     /* footer */
     c.fillStyle = solid; c.fillRect(0, 1276, 1080, 74);
-    setDir(c, "ltr"); c.fillStyle = "#ffffff"; c.textAlign = "center"; fnt(c, "bold", 38); c.fillText("@JobVacencies", 540, 1314);
+    var rct = contactText(d.contact);
+    if (rct){ setDir(c, "ltr"); c.fillStyle = "#ffffff"; c.textAlign = "center"; c.fillText(shrinkFit(c, rct, "bold", 38, 24, 960), 540, 1314); }
     c.restore();
   }
 
@@ -866,6 +868,36 @@ var CFG = {"key": "employer", "title": "\u062A\u062E\u0635\u0635\u200C\u06CC\u06
   function setDir(c, d){ try { c.direction = d; } catch(e){} }
   function fnt(c, w, px){ c.font = w + " " + px + "px " + FONT; }
   function fit(c, s, maxW){ if (c.measureText(s).width <= maxW) return s; while (s.length > 1 && c.measureText(s + "\u2026").width > maxW) s = s.slice(0, -1); return trim(s) + "\u2026"; }
+  function pickContact(raw){
+    var s = toEn(trim(raw || "")), m, rest; if (!s) return null;
+    var em = s.match(/[^\s@]+@[^\s@]+\.[A-Za-z]{2,}/);
+    rest = em ? s.replace(em[0], " ") : s;
+    var re = /(\+98|0098|0)[\d\s\-().]{9,20}/g;
+    while ((m = re.exec(rest))){ var t = trim(m[0]).replace(/[\s\-(.]+$/, ""); if (/^(\+98|0098|0)\d{10}/.test(t.replace(/[\s\-().]/g, ""))) return {k: "phone", v: t}; }
+    if (em) return {k: "email", v: em[0]};
+    m = rest.match(/(^|\s)@([A-Za-z][A-Za-z0-9_]{3,31})(?=\s|$)/); if (m) return {k: "tg", v: "@" + m[2]};
+    m = rest.match(/t(?:elegram)?\.me\/(\+?[A-Za-z0-9_]{4,})/i); if (m) return {k: "tg", v: m[1].charAt(0) === "+" ? "t.me/" + m[1] : "@" + m[1]};
+    return null;
+  }
+  /* Telegram auto-linkable form of the chosen contact (caption text) */
+  function contactLink(raw){
+    var p = pickContact(raw); if (!p) return trim(toEn(raw || ""));
+    if (p.k === "phone"){ var t = p.v.replace(/[^\d+]/g, ""); return t.replace(/^0098/, "+98"); }
+    return p.v;
+  }
+  function contactText(raw){ var p = pickContact(raw); if (!p) return ""; return (p.k === "phone" ? "\ud83d\udcde " : p.k === "email" ? "\u2709\ufe0f " : "Telegram: ") + p.v; }
+  /* brand handle drawn LTR right next to the RTL brand; returns its total width */
+  function drawHandle(c, xRight, y, px, col){
+    fnt(c, "bold", px); var sep = "|", h = "@JobVacencies", g = Math.round(px * .45);
+    var sw = c.measureText(sep).width, hw;
+    setDir(c, "ltr"); c.textAlign = "right"; c.fillStyle = col;
+    c.globalAlpha = .55; c.fillText(sep, xRight - g, y); c.globalAlpha = 1;
+    hw = c.measureText(h).width; c.fillText(h, xRight - g - sw - g, y);
+    setDir(c, "rtl");
+    return g + sw + g + hw;
+  }
+  /* fit text into maxW by shrinking font (minPx), then ellipsis */
+  function shrinkFit(c, t, w, px, minPx, maxW){ fnt(c, w, px); while (px > minPx && c.measureText(t).width > maxW){ px -= 2; fnt(c, w, px); } return fit(c, t, maxW); }
   function wrap(c, s, maxW, maxLines){
     var words = String(s).split(/\s+/), lines = [], cur = "", i;
     for (i = 0; i < words.length; i++){
@@ -879,7 +911,7 @@ var CFG = {"key": "employer", "title": "\u062A\u062E\u0635\u0635\u200C\u06CC\u06
   }
   function bannerData(){
     if (CFG.resume) return resumeData();
-    var d = {label: CFG.bannerLabel, title: "", extra: "", rows: [], urgent: !!state.urgent, industry: industryName(), featured: !!state.featured, company: trim(state.v.company || "")}, i, fd;
+    var d = {label: CFG.bannerLabel, title: "", extra: "", rows: [], urgent: !!state.urgent, industry: industryName(), featured: !!state.featured, company: trim(state.v.company || ""), contact: trim(state.v.contact || "")}, i, fd;
     for (i = 0; i < CFG.fields.length; i++){
       fd = CFG.fields[i];
       if (fd.type === "title"){ var tp = titleParts(fd); d.title = tp[0] || tp[1]; d.extra = tp[0] ? tp[1] : ""; }
@@ -904,8 +936,9 @@ var CFG = {"key": "employer", "title": "\u062A\u062E\u0635\u0635\u200C\u06CC\u06
     /* brand */
     c.fillStyle = T.fg; c.textAlign = "right"; fnt(c, "bold", 58);
     c.fillText("\u062A\u062E\u0635\u0635\u200C\u06CC\u0627\u0628", 1000, 105);
-    var bw = c.measureText("\u062A\u062E\u0635\u0635\u200C\u06CC\u0627\u0628").width;
-    c.fillStyle = T.accent; rr(c, 1000 - bw, 148, Math.min(bw, 120), 8, 4); c.fill();
+    var bw0 = c.measureText("\u062A\u062E\u0635\u0635\u200C\u06CC\u0627\u0628").width;
+    c.fillStyle = T.accent; rr(c, 1000 - bw0, 148, Math.min(bw0, 120), 8, 4); c.fill();
+    var bw = bw0 + drawHandle(c, 1000 - bw0, 108, 32, T.fg);
     var bx = 80;
     /* featured: gold frame + badge */
     if (d.featured){
@@ -992,10 +1025,12 @@ var CFG = {"key": "employer", "title": "\u062A\u062E\u0635\u0635\u200C\u06CC\u06
     }
     }
     /* footer */
-    setDir(c, "ltr"); fnt(c, "bold", 44);
-    var ft = "@JobVacencies", fw = c.measureText(ft).width + 80;
-    c.fillStyle = T.accent; rr(c, 540 - fw / 2, 972, fw, 72, 36); c.fill();
-    c.fillStyle = T.accentText; c.textAlign = "center"; c.fillText(ft, 540, 1010);
+    var ft = contactText(d.contact);
+    if (ft){
+      setDir(c, "ltr"); ft = shrinkFit(c, ft, "bold", 44, 22, 880); var fw = c.measureText(ft).width + 80;
+      c.fillStyle = T.accent; rr(c, 540 - fw / 2, 972, fw, 72, 36); c.fill();
+      c.fillStyle = T.accentText; c.textAlign = "center"; c.fillText(ft, 540, 1010);
+    }
     c.restore();
   }
   var bannerTimer = null, bannerBlob = null;
