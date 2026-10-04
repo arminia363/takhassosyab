@@ -1078,9 +1078,8 @@ var CFG = {"key": "jobseeker", "title": "\u062A\u062E\u0635\u0635\u200C\u06CC\u0
       toast("\u2705 \u0639\u06A9\u0633 \u062F\u0627\u0646\u0644\u0648\u062F \u0634\u062F\u061B \u0627\u06AF\u0631 \u0630\u062E\u06CC\u0631\u0647 \u0646\u0634\u062F \u00AB\u0646\u0645\u0627\u06CC\u0634 \u0639\u06A9\u0633\u00BB \u0631\u0627 \u0628\u0632\u0646\u06CC\u062F");
     }, "image/png");
   }
-  var ADMIN_LINE = "\uD83D\uDCE8 \u0627\u0631\u0633\u0627\u0644 \u0628\u0647 \u0627\u062F\u0645\u06CC\u0646: @arminia363 | @nasimia67";
   var ADMIN_ID = "arminia363";
-  function sentText(t){ return t + "\n" + ADMIN_LINE; }
+  function sentText(t){ return t; }
   function shareImg(){
     var text = sentText(update());
     if (!validateAll()) return;
