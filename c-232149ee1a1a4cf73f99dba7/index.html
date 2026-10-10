@@ -1,0 +1,1465 @@
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Code</title>
+<style>body{font-family:sans-serif;margin:0;padding:16px}button{width:100%;padding:18px;font-size:20px;background:#0f7a55;color:#fff;border:0;border-radius:12px}textarea{width:100%;height:40vh;margin-top:12px;direction:ltr;font-size:11px}#m{margin:10px 0;font-size:18px;text-align:center}</style></head><body>
+<button id="b">کپی کل کد</button><div id="m"></div>
+<textarea id="t" readonly>var TZ = &#x27;Asia/Tehran&#x27;;
+var ADMIN_KEY = &#x27;ty419378&#x27;;
+var CHANNEL = &#x27;@JobVacencies&#x27;;
+var SITE = &#x27;https://takhassosyab.ir&#x27;;
+var GROUP_LINK = &#x27;https://t.me/+UqG0KBAd-pQ0YzQ0&#x27;;
+var API_VERSION = 2;
+// قابلیت‌های سرور؛ فرانت (پنل ادمین و برنامه) با این‌ها می‌فهمد چه امکاناتی را نشان بدهد (سرور قدیمی‌تر این فیلد را ندارد)
+var FEATURES = {reason:1, edit:1, bulk:1, preview:1, inboxState:1, mine:1, stats:1, dupGuard:1, smsAdmin:1}; // features_() اضافه می‌کند: sms:1 فقط وقتی ارائه‌دهنده‌ی پیامک تنظیم شده
+var OWNER_MOBILES = [&#x27;09123134395&#x27;]; // ادمین دائمی (آرمین)؛ ادمین‌های دیگر از پنل اضافه می‌شوند
+
+var S_LIST = &#x27;فهرست&#x27;, S_USERS = &#x27;کاربران&#x27;, S_NOTIF = &#x27;اعلان‌ها&#x27;, S_ADMINS = &#x27;ادمین‌ها&#x27;;
+var H = {};
+H[S_LIST]   = [&#x27;id&#x27;,&#x27;type&#x27;,&#x27;title&#x27;,&#x27;text&#x27;,&#x27;public&#x27;,&#x27;deleted&#x27;,&#x27;status&#x27;,&#x27;msg_id&#x27;,&#x27;owner&#x27;,&#x27;cat&#x27;,&#x27;city&#x27;,&#x27;tags&#x27;,&#x27;vis&#x27;,&#x27;target&#x27;,&#x27;created&#x27;,&#x27;updated&#x27;,&#x27;src&#x27;,&#x27;tg&#x27;,&#x27;data&#x27;,&#x27;reason&#x27;];
+H[S_USERS]  = [&#x27;mobile&#x27;,&#x27;name&#x27;,&#x27;role&#x27;,&#x27;status&#x27;,&#x27;created&#x27;,&#x27;approved_at&#x27;,&#x27;tg_chat&#x27;,&#x27;tg_user&#x27;,&#x27;link_code&#x27;,&#x27;invite&#x27;,&#x27;tokens&#x27;,&#x27;interests&#x27;,&#x27;city&#x27;,&#x27;last_seen&#x27;,&#x27;tg&#x27;,&#x27;verified&#x27;,&#x27;prefs&#x27;,&#x27;reason&#x27;,&#x27;state&#x27;];
+H[S_NOTIF]  = [&#x27;id&#x27;,&#x27;to&#x27;,&#x27;kind&#x27;,&#x27;title&#x27;,&#x27;body&#x27;,&#x27;ref&#x27;,&#x27;created&#x27;,&#x27;read&#x27;];
+H[S_ADMINS] = [&#x27;chat_id&#x27;,&#x27;username&#x27;,&#x27;name&#x27;,&#x27;added&#x27;];
+var TEXT_COLS = {}; // ستون‌هایی که باید متن بمانند (صفر اول موبایل نپرد)
+TEXT_COLS[S_LIST] = [&#x27;id&#x27;,&#x27;owner&#x27;,&#x27;target&#x27;,&#x27;msg_id&#x27;];
+TEXT_COLS[S_USERS] = [&#x27;mobile&#x27;,&#x27;tg_chat&#x27;,&#x27;link_code&#x27;];
+TEXT_COLS[S_NOTIF] = [&#x27;id&#x27;,&#x27;to&#x27;,&#x27;ref&#x27;];
+TEXT_COLS[S_ADMINS] = [&#x27;chat_id&#x27;];
+
+// دسته‌های شغلی (هشتگ اصلی دپارتمان‌ها؛ هم‌خوان با فرم‌ها)
+var CATS = [
+  [&#x27;#فروش&#x27;,&#x27;فروش و بازاریابی&#x27;], [&#x27;#بازرگانی&#x27;,&#x27;بازرگانی&#x27;], [&#x27;#حسابداری&#x27;,&#x27;مالی و حسابداری&#x27;],
+  [&#x27;#منابع_انسانی&#x27;,&#x27;منابع انسانی و اداری&#x27;], [&#x27;#خدمات_پس_از_فروش&#x27;,&#x27;خدمات پس از فروش و فنی&#x27;],
+  [&#x27;#انبارداری&#x27;,&#x27;انبار و لجستیک&#x27;], [&#x27;#IT&#x27;,&#x27;IT و شبکه&#x27;], [&#x27;#مارکتینگ&#x27;,&#x27;مارکتینگ و محتوا&#x27;],
+  [&#x27;#پشتیبانی&#x27;,&#x27;پشتیبانی مشتری&#x27;], [&#x27;#حراست&#x27;,&#x27;حراست و خدمات&#x27;], [&#x27;#مدیریت&#x27;,&#x27;مدیریت&#x27;]
+];
+var CAT_ALIASES = {&#x27;#تعمیرات_موبایل&#x27;:&#x27;#خدمات_پس_از_فروش&#x27;, &#x27;#تعمیرات&#x27;:&#x27;#خدمات_پس_از_فروش&#x27;, &#x27;#مالی&#x27;:&#x27;#حسابداری&#x27;, &#x27;#اداری&#x27;:&#x27;#منابع_انسانی&#x27;,
+  &#x27;#انبار&#x27;:&#x27;#انبارداری&#x27;, &#x27;#شبکه&#x27;:&#x27;#IT&#x27;, &#x27;#برنامه_نویس&#x27;:&#x27;#IT&#x27;, &#x27;#بازاریابی&#x27;:&#x27;#فروش&#x27;, &#x27;#فروشنده&#x27;:&#x27;#فروش&#x27;, &#x27;#ترخیص&#x27;:&#x27;#بازرگانی&#x27;, &#x27;#واردات&#x27;:&#x27;#بازرگانی&#x27;};
+var CAT_WORDS = [[&#x27;#حسابداری&#x27;,/حسابدار|مالی/],[&#x27;#فروش&#x27;,/فروشنده|کارشناس فروش|بازاریاب|فروش/],[&#x27;#بازرگانی&#x27;,/بازرگانی|ترخیص|واردات/],
+  [&#x27;#IT&#x27;,/برنامه.?نویس|شبکه|\bIT\b|نرم.?افزار/],[&#x27;#انبارداری&#x27;,/انباردار|انبار/],[&#x27;#خدمات_پس_از_فروش&#x27;,/تعمیر|تکنسین|گارانتی/],
+  [&#x27;#مارکتینگ&#x27;,/مارکتینگ|محتوا|گرافیک|اینستاگرام|سوشال/],[&#x27;#منابع_انسانی&#x27;,/منابع انسانی|منشی|اداری/],[&#x27;#پشتیبانی&#x27;,/پشتیبانی|اپراتور/],
+  [&#x27;#حراست&#x27;,/نگهبان|حراست|خدمات/],[&#x27;#مدیریت&#x27;,/مدیر/]];
+var REMOTE = &#x27;#دورکاری&#x27;;
+// تنظیمات اعلان ادمین (ستون prefs در برگه‌ی کاربران، JSON)
+var PREF_DEFAULT = {signup:1, ad:1, cv:1, private:1, direct:1, channel:0, daily:0, tg:1, app:1};
+
+/* =========================== HTTP =========================== */
+function doGet(e) {
+  var p = (e &amp;&amp; e.parameter) || {};
+  try {
+    if (p.action === &#x27;list&#x27;) return json_({ok:true, items:legacyList_(false)});
+    if (p.action === &#x27;admin&#x27;) {
+      if (p.key !== ADMIN_KEY) return json_({ok:false, error:&#x27;key&#x27;});
+      return json_({ok:true, items:legacyList_(true)});
+    }
+    if (p.action === &#x27;feed&#x27;) return json_({ok:true, items:feed_()});
+    return json_({ok:true, service:&#x27;takhassosyab&#x27;, v:API_VERSION, bot:botName_(), features:features_()});
+  } catch (err) { return json_({ok:false, error:&#x27;server&#x27;, detail:String(err)}); }
+}
+
+function doPost(e) {
+  var d = {};
+  try { d = JSON.parse(e.postData.contents); } catch (err) { d = (e &amp;&amp; e.parameter) || {}; }
+  try {
+    var a = d.action || &#x27;&#x27;;
+    if (API[a]) return json_(API[a](d));
+    if (a === &#x27;save&#x27;) return json_(legacySave_(d));
+    if (a === &#x27;approve&#x27;) { if (d.key !== ADMIN_KEY) return json_({ok:false, error:&#x27;key&#x27;}); return json_(approveItem_(d.id, &#x27;پنل&#x27;)); }
+    if (a === &#x27;delete&#x27;) { if (d.key !== ADMIN_KEY) return json_({ok:false, error:&#x27;key&#x27;}); return json_(deleteItem_(d.id, &#x27;پنل&#x27;)); }
+    if (d.type === &#x27;employer&#x27; || d.type === &#x27;jobseeker&#x27; || d.type === &#x27;membership&#x27;) return json_(legacyForm_(d));
+    return json_({ok:false, error:&#x27;action&#x27;});
+  } catch (err) {
+    Logger.log(&#x27;خطا: &#x27; + err + &#x27;\n&#x27; + (err &amp;&amp; err.stack));
+    return json_({ok:false, error:&#x27;server&#x27;, detail:String(err)});
+  }
+}
+
+var API = {
+  ping: function(){ return {ok:true, v:API_VERSION, bot:botName_(), features:features_()}; },
+  feed: function(){ return {ok:true, items:feed_()}; },
+  register: function(d){ var ctx = {}, r = locked_(function(){ return register_(d, ctx); }); var s = smsAfter_(ctx); if (s &amp;&amp; r.ok) r.sms = s; else if (r.ok &amp;&amp; r.smsRes) r.sms = r.smsRes; delete r.smsRes; return r; },
+  login_start: function(d){ var ctx = {}, r = locked_(function(){ return loginStart_(d, ctx); }); if (!ctx.send) return r; var s = smsAfter_(ctx); if (s.sent) return r; r.ok = false; r.error = &#x27;sms_fail&#x27;; delete r.via; delete r.resend; delete r.ttl; return r; },
+  verify_mobile: function(d){ return locked_(function(){ return verifyMobile_(d); }); },
+  verify_resend: function(d){ var ctx = {}, r = locked_(function(){ return verifyResend_(d, ctx); }); var s = smsAfter_(ctx); if (s &amp;&amp; r.ok) r.sms = s; else if (r.ok &amp;&amp; r.smsRes) r.sms = r.smsRes; delete r.smsRes; return r; },
+  change_mobile: function(d){ var ctx = {}, r = locked_(function(){ return changeMobile_(d, ctx); }); var s = smsAfter_(ctx); if (s &amp;&amp; r.ok) r.sms = s; else if (r.ok &amp;&amp; r.smsRes) r.sms = r.smsRes; delete r.smsRes; return r; },
+  a_sms: function(d){ if (!isAdmin_(d)) return {ok:false, error:&#x27;key&#x27;}; return smsStatus_(); },
+  login_verify: function(d){ return locked_(function(){ return loginVerify_(d); }); },
+  login_poll: function(d){ pull_(false); return loginPoll_(d); },
+  me: function(d){ return me_(d); },
+  profile: function(d){ return locked_(function(){ return profile_(d); }); },
+  submit: function(d){ return locked_(function(){ return submit_(d); }); },
+  my_delete: function(d){ return locked_(function(){
+    var u = auth_(d); if (!u) return {ok:false, error:&#x27;auth&#x27;};
+    var it = find_(S_LIST, &#x27;id&#x27;, d.id); if (!it || it.owner !== u.mobile) return {ok:false, error:&#x27;notfound&#x27;};
+    if (it.status === &#x27;rejected&#x27;) { it.status = &#x27;dismissed&#x27;; it.updated = now_(); save_(table_(S_LIST), it); return {ok:true}; }
+    return deleteItem_(d.id, u.name || u.mobile);
+  }); },
+  my_edit: function(d){ return locked_(function(){ return myEdit_(d); }); },
+  my_close: function(d){ return locked_(function(){ return myClose_(d, true); }); },
+  my_renew: function(d){ return locked_(function(){ return myClose_(d, false); }); },
+  inbox_state: function(d){ return locked_(function(){ return inboxState_(d); }); },
+  saved_sync: function(d){ return locked_(function(){ return savedSync_(d); }); },
+  notif_read: function(d){ return locked_(function(){
+    var u = auth_(d); if (!u) return {ok:false, error:&#x27;auth&#x27;};
+    var t = table_(S_NOTIF), n = 0;
+    t.rows.forEach(function(r){ if (r.to === u.mobile &amp;&amp; !r.read) { r.read = &#x27;1&#x27;; save_(t, r); n++; } });
+    return {ok:true, n:n};
+  }); },
+  // ---------- ادمین ----------
+  admin_prefs: function(d){ return locked_(function(){
+    var t = table_(S_USERS), u = authIn_(t, d); if (!u) return {ok:false, error:&#x27;auth&#x27;};
+    if (!isAdminUser_(u)) return {ok:false, error:&#x27;key&#x27;};
+    if (d.prefs &amp;&amp; typeof d.prefs === &#x27;object&#x27;) {
+      var cur = prefsOf_(u);
+      Object.keys(PREF_DEFAULT).forEach(function(k){ if (k in d.prefs) cur[k] = d.prefs[k] ? 1 : 0; });
+      u.prefs = JSON.stringify(cur); save_(t, u);
+    }
+    return {ok:true, prefs:prefsOf_(u)};
+  }); },
+  a_list: function(d){ if (!isAdmin_(d)) return {ok:false, error:&#x27;key&#x27;}; pull_(false); return adminList_(); },
+  a_user: function(d){ if (!isAdmin_(d)) return {ok:false, error:&#x27;key&#x27;}; return locked_(function(){
+    if ((d.op === &#x27;approve&#x27; || d.op === &#x27;reject&#x27; || d.op === &#x27;block&#x27; || d.op === &#x27;restore&#x27;) &amp;&amp; selfByToken_(d, d.mobile)) return SELF_ERR;
+    if (d.op === &#x27;approve&#x27;) return approveUser_(d.mobile, &#x27;پنل&#x27;);
+    if (d.op === &#x27;reject&#x27;) return rejectUser_(d.mobile, &#x27;پنل&#x27;, &#x27;rejected&#x27;, d.reason);
+    if (d.op === &#x27;block&#x27;) return rejectUser_(d.mobile, &#x27;پنل&#x27;, &#x27;blocked&#x27;, d.reason);
+    if (d.op === &#x27;make_admin&#x27; || d.op === &#x27;remove_admin&#x27;) return setAdminMobile_(d.mobile, d.op === &#x27;make_admin&#x27;);
+    if (d.op === &#x27;restore&#x27;) { var t = table_(S_USERS), u = findIn_(t, &#x27;mobile&#x27;, normMobile_(d.mobile)); if (!u) return {ok:false, error:&#x27;notfound&#x27;}; u.status = &#x27;pending&#x27;; u.reason = &#x27;&#x27;; save_(t, u); return {ok:true}; }
+    return {ok:false, error:&#x27;op&#x27;};
+  }); },
+  a_item: function(d){ if (!isAdmin_(d)) return {ok:false, error:&#x27;key&#x27;}; return locked_(function(){
+    if ((d.op === &#x27;approve&#x27; || d.op === &#x27;reject&#x27;) &amp;&amp; selfByToken_(d, targetMobileOfItem_(d.id))) return SELF_ERR;
+    if (d.op === &#x27;approve&#x27;) return approveItem_(d.id, &#x27;پنل&#x27;);
+    if (d.op === &#x27;reject&#x27;) return rejectItem_(d.id, &#x27;پنل&#x27;, d.reason);
+    if (d.op === &#x27;delete&#x27;) return deleteItem_(d.id, &#x27;پنل&#x27;);
+    if (d.op === &#x27;edit&#x27;) return editItem_(d, &#x27;پنل&#x27;);
+    return {ok:false, error:&#x27;op&#x27;};
+  }); },
+  a_bulk: function(d){ if (!isAdmin_(d)) return {ok:false, error:&#x27;key&#x27;}; return locked_(function(){ return bulk_(d); }); },
+  a_preview: function(d){ if (!isAdmin_(d)) return {ok:false, error:&#x27;key&#x27;}; return locked_(function(){ return preview_(d); }); },
+  a_add: function(d){ if (!isAdmin_(d)) return {ok:false, error:&#x27;key&#x27;}; return locked_(function(){
+    var it = newItem_({type:d.type === &#x27;jobseeker&#x27; ? &#x27;jobseeker&#x27; : &#x27;employer&#x27;, title:d.title, text:d.text, status:&#x27;approved&#x27;, src:&#x27;admin&#x27;, public:&#x27;بله&#x27;});
+    if (d.post) { var r = postToChannel(itemPostText_(it)); if (r.ok) { it.msg_id = String(r.msgId); save_(table_(S_LIST), it); } }
+    afterPublished_(it);
+    return {ok:true, id:it.id};
+  }); }
+};
+
+/* =========================== کاربران =========================== */
+function register_(d, ctx) {
+  var mobile = normMobile_(d.mobile), name = clean_(d.name, 60), role = d.role === &#x27;employer&#x27; ? &#x27;employer&#x27; : &#x27;jobseeker&#x27;;
+  if (!mobile) return {ok:false, error:&#x27;mobile&#x27;};
+  if (!name) return {ok:false, error:&#x27;name&#x27;};
+  var t = table_(S_USERS), u = findIn_(t, &#x27;mobile&#x27;, mobile), isNew = !u;
+  if (u &amp;&amp; (u.status === &#x27;blocked&#x27;)) return {ok:false, error:&#x27;blocked&#x27;};
+  if (u &amp;&amp; u.status === &#x27;approved&#x27;) return {ok:false, error:&#x27;exists&#x27;, needLogin:true}; // عضو تأییدشده باید با تلگرام وارد شود
+  if (!u) u = {mobile:mobile, created:now_(), status:&#x27;pending&#x27;};
+  if (u.status === &#x27;rejected&#x27;) { u.status = &#x27;pending&#x27;; u.reason = &#x27;&#x27;; }
+  var smsFlow = !!d.sms &amp;&amp; smsOn_() &amp;&amp; !vOk_(u); // فرانت جدید با sms:1 می‌آید؛ فرانت قدیمی مثل قبل بدون تأیید پیامکی ثبت می‌شود
+  u.name = name; u.role = role; if (d.city) u.city = clean_(d.city, 40);
+  if (!u.link_code) u.link_code = rand_(10);
+  var token = rand_(24);
+  u.tokens = addToken_(u.tokens, token);
+  u.last_seen = now_();
+  if (smsFlow &amp;&amp; u.status === &#x27;pending&#x27;) u.verified = &#x27;w&#x27;; // شماره باید اول با پیامک تأیید شود؛ بعدش درخواست به ادمین می‌رسد
+  save_(t, u);
+  var out = {ok:true, token:token, user:pubUser_(u)};
+  if (u.verified === &#x27;w&#x27;) { out.smsRes = smsReply_(smsReserve_(mobile), ctx, mobile); return out; }
+  legacyMemberRow_(u);
+  if (isNew || u.status === &#x27;pending&#x27;) notifyAdminsUser_(u, isNew);
+  return out;
+}
+
+/** تأیید شماره‌ی ثبت‌نام با کد پیامکی (کاربر توکن دارد). */
+function verifyMobile_(d) {
+  var u = auth_(d); if (!u) return {ok:false, error:&#x27;auth&#x27;};
+  if (vOk_(u)) return {ok:true, user:pubUser_(u), already:true};
+  var r = codeCheck_(u.mobile, toEn_(String(d.code || &#x27;&#x27;)).replace(/\D/g, &#x27;&#x27;));
+  if (!r.ok) return r;
+  return {ok:true, user:pubUser_(markVerified_(u.mobile))};
+}
+function verifyResend_(d, ctx) {
+  var u = auth_(d); if (!u) return {ok:false, error:&#x27;auth&#x27;};
+  if (!smsOn_()) return {ok:false, error:&#x27;nosms&#x27;};
+  if (vOk_(u)) return {ok:true, user:pubUser_(u), already:true};
+  return {ok:true, smsRes:smsReply_(smsReserve_(u.mobile), ctx, u.mobile)};
+}
+/** شماره‌ی اشتباه: فقط برای ثبت‌نامِ هنوز تأییدنشده؛ شماره عوض می‌شود و کد تازه می‌رود. */
+function changeMobile_(d, ctx) {
+  var t = table_(S_USERS), u = authIn_(t, d); if (!u) return {ok:false, error:&#x27;auth&#x27;};
+  if (!smsOn_()) return {ok:false, error:&#x27;nosms&#x27;};
+  if (u.verified !== &#x27;w&#x27; || u.status !== &#x27;pending&#x27;) return {ok:false, error:&#x27;status&#x27;};
+  var m = normMobile_(d.mobile); if (!m) return {ok:false, error:&#x27;mobile&#x27;};
+  if (m !== u.mobile) {
+    var other = findIn_(t, &#x27;mobile&#x27;, m);
+    if (other) return {ok:false, error:&#x27;exists&#x27;, needLogin:other.status === &#x27;approved&#x27;};
+    var c = CacheService.getScriptCache(); c.remove(&#x27;sc_&#x27; + u.mobile); c.remove(&#x27;lt_&#x27; + u.mobile);
+    u.mobile = m; save_(t, u);
+  }
+  return {ok:true, user:pubUser_(u), smsRes:smsReply_(smsReserve_(u.mobile), ctx, u.mobile)};
+}
+
+function loginStart_(d, ctx) {
+  var mobile = normMobile_(d.mobile); if (!mobile) return {ok:false, error:&#x27;mobile&#x27;};
+  var u = find_(S_USERS, &#x27;mobile&#x27;, mobile);
+  if (!u) return {ok:false, error:&#x27;nouser&#x27;};
+  if (u.status === &#x27;blocked&#x27;) return {ok:false, error:&#x27;blocked&#x27;};
+  var cache = CacheService.getScriptCache();
+  if (d.sms &amp;&amp; d.via !== &#x27;telegram&#x27; &amp;&amp; smsOn_()) { // فرانت جدید: پیش‌فرض پیامک؛ via:&#x27;telegram&#x27; = «ارسال از تلگرام»
+    var rs = smsReserve_(mobile);
+    if (!rs.ok) return {ok:false, error:rs.error, wait:rs.wait || 0, canTelegram:true};
+    ctx.send = {mobile:mobile, code:rs.code};
+    return {ok:true, via:&#x27;sms&#x27;, resend:SMS_RESEND, ttl:SMS_TTL, canTelegram:true, tg:!!u.tg_chat};
+  }
+  if (u.tg_chat) {
+    var code = String(Math.floor(10000 + Math.random() * 90000));
+    cache.put(&#x27;lc_&#x27; + mobile, code, 600);
+    var r = tgSend_(u.tg_chat, &#x27;🔐 کد ورود تخصص‌یاب: &#x27; + code + &#x27;\nاین کد را به کسی نده. اگر درخواست ورود نداده‌ای، این پیام را نادیده بگیر.&#x27;);
+    if (r &amp;&amp; r.ok) return {ok:true, via:&#x27;code&#x27;};
+  }
+  var nonce = rand_(12);
+  cache.put(&#x27;ln_&#x27; + nonce, JSON.stringify({mobile:mobile}), 900);
+  return {ok:true, via:&#x27;telegram&#x27;, nonce:nonce, link:botLink_(&#x27;G&#x27; + nonce)};
+}
+
+function loginVerify_(d) {
+  var mobile = normMobile_(d.mobile), code = toEn_(String(d.code || &#x27;&#x27;)).replace(/\D/g, &#x27;&#x27;);
+  var r = codeCheck_(mobile, code);
+  if (!r.ok) return r;
+  if (r.via === &#x27;sms&#x27;) markVerified_(mobile); // ورود با پیامک = اثبات مالکیت شماره
+  return issueToken_(mobile);
+}
+
+function loginPoll_(d) {
+  var cache = CacheService.getScriptCache(), raw = cache.get(&#x27;ln_&#x27; + String(d.nonce || &#x27;&#x27;));
+  if (!raw) return {ok:false, error:&#x27;expired&#x27;};
+  var o = JSON.parse(raw);
+  if (!o.ok) return {ok:true, waiting:true};
+  cache.remove(&#x27;ln_&#x27; + d.nonce);
+  return locked_(function(){ return issueToken_(o.mobile); });
+}
+
+function issueToken_(mobile) {
+  var t = table_(S_USERS), u = findIn_(t, &#x27;mobile&#x27;, mobile);
+  if (!u) return {ok:false, error:&#x27;nouser&#x27;};
+  var token = rand_(24); u.tokens = addToken_(u.tokens, token); u.last_seen = now_(); save_(t, u);
+  return {ok:true, token:token, user:pubUser_(u)};
+}
+
+function me_(d) {
+  var u = auth_(d); if (!u) return {ok:false, error:&#x27;auth&#x27;};
+  if (!u.tg_chat || u.status === &#x27;pending&#x27;) { pull_(false); u = auth_(d); }
+  var notifs = table_(S_NOTIF).rows.filter(function(n){ return n.to === u.mobile; })
+    .slice(-60).reverse().map(function(n){ return {id:n.id, kind:n.kind, title:n.title, body:n.body, ref:n.ref, at:n.created, read:!!n.read}; });
+  var items = table_(S_LIST).rows, mine = [], myAds = {}, inbox = [];
+  items.forEach(function(it){
+    if (it.owner !== u.mobile || it.deleted === &#x27;بله&#x27;) return;
+    if (it.type === &#x27;employer&#x27;) myAds[it.id] = it.title;
+  });
+  items.forEach(function(it){
+    if (it.owner !== u.mobile || it.type === &#x27;membership&#x27;) return;
+    var gone = it.deleted === &#x27;بله&#x27;;
+    if (gone &amp;&amp; it.status !== &#x27;rejected&#x27;) return; // رد‌شده‌ها برای نمایش دلیل می‌مانند تا کاربر خودش حذف کند
+    var tg = it.target ? find_(S_LIST, &#x27;id&#x27;, it.target) : null;
+    var dj = String(it.data || &#x27;&#x27;).length &lt;= 8000 ? parseJ_(it.data, null) : null;
+    mine.push({id:it.id, type:it.type, title:it.title, status:it.status, vis:it.vis, created:it.created, updated:it.updated, text:it.text, cat:it.cat, city:it.city,
+      tags:it.tags, data:dj, target:it.target, targetTitle:tg ? tg.title : &#x27;&#x27;, reason:(it.status === &#x27;rejected&#x27; || it.status === &#x27;closed&#x27;) ? it.reason : &#x27;&#x27;, msg:it.msg_id || &#x27;&#x27;});
+  });
+  var st = userState_(u);
+  items.forEach(function(it){
+    if (it.vis === &#x27;direct&#x27; &amp;&amp; myAds[it.target] &amp;&amp; it.deleted !== &#x27;بله&#x27;)
+      inbox.push({id:it.id, title:it.title, text:it.text, cat:it.cat, city:it.city, created:it.created, ad:it.target, adTitle:myAds[it.target], state:st.inbox[it.id] || &#x27;&#x27;});
+  });
+  var adm = isAdminUser_(u);
+  return {ok:true, user:pubUser_(u), adminPrefs:adm ? prefsOf_(u) : undefined, notifs:notifs, unread:notifs.filter(function(n){return !n.read;}).length,
+    mine:mine.reverse(), inbox:inbox.reverse(), saved:st.saved, features:features_(), bot:botName_(), group:u.status === &#x27;approved&#x27; ? GROUP_LINK : &#x27;&#x27;};
+}
+
+function profile_(d) {
+  var t = table_(S_USERS), u = authIn_(t, d); if (!u) return {ok:false, error:&#x27;auth&#x27;};
+  if (d.name) u.name = clean_(d.name, 60);
+  if (d.city != null) u.city = clean_(d.city, 40);
+  if (d.role === &#x27;employer&#x27; || d.role === &#x27;jobseeker&#x27;) u.role = d.role;
+  if (d.interests != null) u.interests = normCats_(String(d.interests)).join(&#x27; &#x27;);
+  if (d.logout) u.tokens = String(u.tokens || &#x27;&#x27;).split(&#x27; &#x27;).filter(function(x){ return x &amp;&amp; x !== d.token; }).join(&#x27; &#x27;);
+  save_(t, u);
+  return {ok:true, user:pubUser_(u)};
+}
+
+function approveUser_(mobile, actor) {
+  mobile = normMobile_(mobile);
+  var t = table_(S_USERS), u = findIn_(t, &#x27;mobile&#x27;, mobile);
+  if (!u) return {ok:false, error:&#x27;notfound&#x27;};
+  if (u.status === &#x27;approved&#x27;) return {ok:true, already:true, invite:u.invite};
+  u.status = &#x27;approved&#x27;; u.approved_at = now_();
+  if (!u.invite) u.invite = createInvite_(u);
+  save_(t, u);
+  legacyMemberRow_(u);
+  var body = &#x27;به تخصص‌یاب خوش آمدی. حالا به همه‌ی آگهی‌ها و رزومه‌ها دسترسی داری.\nلینک ورود به کانال: &#x27; + u.invite + &#x27;\nگروه گفتگو: &#x27; + GROUP_LINK;
+  notify_(u, &#x27;approved&#x27;, &#x27;عضویت شما تأیید شد&#x27;, body, &#x27;&#x27;, {url:SITE + &#x27;/enter.html&#x27;, urlText:&#x27;ورود به برنامه&#x27;});
+  editAdminMsgs_(u.tg, adminUserText_(u) + &#x27;\n\n✅ تأیید شد · &#x27; + actor);
+  u.tg = &#x27;&#x27;; save_(t, u);
+  return {ok:true, invite:u.invite};
+}
+
+function rejectUser_(mobile, actor, status, reason) {
+  mobile = normMobile_(mobile);
+  var t = table_(S_USERS), u = findIn_(t, &#x27;mobile&#x27;, mobile);
+  if (!u) return {ok:false, error:&#x27;notfound&#x27;};
+  if (u.status === (status || &#x27;rejected&#x27;)) return {ok:true, already:true};
+  reason = clean_(reason, 200);
+  u.status = status || &#x27;rejected&#x27;; u.reason = reason; save_(t, u);
+  legacyMemberRow_(u);
+  if (status !== &#x27;blocked&#x27;) notify_(u, &#x27;rejected&#x27;, &#x27;درخواست عضویت تأیید نشد&#x27;, (reason ? &#x27;دلیل: &#x27; + reason + &#x27;\n&#x27; : &#x27;&#x27;) + &#x27;می‌توانی اطلاعاتت را اصلاح و دوباره درخواست بدهی. اگر فکر می‌کنی اشتباه شده، به ادمین پیام بده: @arminia363&#x27;, &#x27;&#x27;);
+  editAdminMsgs_(u.tg, adminUserText_(u) + &#x27;\n\n❌ &#x27; + (status === &#x27;blocked&#x27; ? &#x27;مسدود شد&#x27; : &#x27;رد شد&#x27;) + &#x27; · &#x27; + actor + (reason ? &#x27;\nدلیل: &#x27; + reason : &#x27;&#x27;));
+  // فقط مسدودسازی ردپای پیام‌های ادمین را پاک می‌کند؛ رد شدن اتصال تلگرام و پیام‌ها را نگه می‌دارد تا «درخواست دوباره» کار کند
+  if (status === &#x27;blocked&#x27;) { u.tg = &#x27;&#x27;; save_(t, u); }
+  return {ok:true};
+}
+
+function createInvite_(u) {
+  var r = tg_(&#x27;createChatInviteLink&#x27;, {chat_id:CHANNEL, member_limit:1, name:(&#x27;عضو &#x27; + u.mobile.slice(-4))});
+  if (r &amp;&amp; r.ok &amp;&amp; r.result &amp;&amp; r.result.invite_link) return r.result.invite_link;
+  return &#x27;https://t.me/&#x27; + CHANNEL.replace(&#x27;@&#x27;, &#x27;&#x27;);
+}
+
+/* =========================== آگهی و رزومه =========================== */
+function submit_(d) {
+  var t = table_(S_USERS), u = authIn_(t, d); if (!u) return {ok:false, error:&#x27;auth&#x27;};
+  if (u.status === &#x27;blocked&#x27; || u.status === &#x27;rejected&#x27;) return {ok:false, error:&#x27;status&#x27;};
+  var type = d.type === &#x27;jobseeker&#x27; ? &#x27;jobseeker&#x27; : &#x27;employer&#x27;;
+  var text = clean_(d.text, 4000, true);
+  if (text.length &lt; 20) return {ok:false, error:&#x27;text&#x27;};
+  var dupId = dupOf_(u.mobile, type, d.type === &#x27;jobseeker&#x27; &amp;&amp; d.vis === &#x27;direct&#x27; ? String(d.target || &#x27;&#x27;) : &#x27;&#x27;, text);
+  if (dupId) return {ok:true, dup:true, id:dupId.id, status:dupId.status};
+  var cache = CacheService.getScriptCache(), rk = &#x27;rs_&#x27; + u.mobile, cnt = Number(cache.get(rk) || 0);
+  if (cnt &gt;= 15) return {ok:false, error:&#x27;rate&#x27;};
+  cache.put(rk, String(cnt + 1), 21600);
+  var vis = type === &#x27;employer&#x27; ? &#x27;channel&#x27; : ([&#x27;channel&#x27;,&#x27;admin&#x27;,&#x27;direct&#x27;].indexOf(d.vis) &gt;= 0 ? d.vis : &#x27;channel&#x27;);
+  var target = &#x27;&#x27;;
+  if (vis === &#x27;direct&#x27;) {
+    var ad = find_(S_LIST, &#x27;id&#x27;, d.target);
+    if (!ad || ad.type !== &#x27;employer&#x27; || ad.deleted === &#x27;بله&#x27;) return {ok:false, error:&#x27;target&#x27;};
+    target = ad.id;
+  }
+  var status = vis === &#x27;channel&#x27; ? &#x27;pending&#x27; : (vis === &#x27;admin&#x27; ? &#x27;private&#x27; : &#x27;direct&#x27;);
+  var cats = normCats_((d.tags || &#x27;&#x27;) + &#x27; &#x27; + (d.cat || &#x27;&#x27;) + &#x27; &#x27; + text);
+  var it = newItem_({type:type, title:clean_(d.title || d.name, 120), text:text, owner:u.mobile, status:status, vis:vis, target:target,
+    public:(vis === &#x27;channel&#x27; ? &#x27;بله&#x27; : &#x27;&#x27;), cat:cats.join(&#x27; &#x27;), city:clean_(d.city, 60), tags:clean_(d.tags, 300), src:&#x27;app&#x27;,
+    data:JSON.stringify(d.fields || {}).slice(0, 20000)});
+  rawLog_(type, it, d.contact);
+  // علاقه‌مندی کاربر برای تطبیق
+  if (cats.length) { u.interests = normCats_((u.interests || &#x27;&#x27;) + &#x27; &#x27; + cats.join(&#x27; &#x27;)).join(&#x27; &#x27;); if (!u.city &amp;&amp; it.city) u.city = it.city; save_(t, u); }
+  if (status === &#x27;pending&#x27;) notifyAdminsItem_(it, u);
+  else if (status === &#x27;private&#x27;) notifyAdminsInfo_(&#x27;📥 رزومه فقط برای ادمین\n&#x27; + itemSummary_(it, u), &#x27;private&#x27;);
+  else deliverDirect_(it, u);
+  return {ok:true, id:it.id, status:status};
+}
+
+function deliverDirect_(it, u) {
+  var ad = find_(S_LIST, &#x27;id&#x27;, it.target);
+  var owner = ad &amp;&amp; ad.owner ? find_(S_USERS, &#x27;mobile&#x27;, ad.owner) : null;
+  if (owner) {
+    notify_(owner, &#x27;resume_direct&#x27;, &#x27;رزومه برای آگهی «&#x27; + (ad.title || &#x27;شما&#x27;) + &#x27;»&#x27;, (it.title || &#x27;رزومه&#x27;) + &#x27;\n\n&#x27; + it.text, it.id,
+      {url:SITE + &#x27;/inbox.html&#x27;, urlText:&#x27;مشاهده در برنامه&#x27;, full:true});
+    notify_(u, &#x27;sent&#x27;, &#x27;رزومه‌ات برای کارفرما ارسال شد&#x27;, &#x27;آگهی: &#x27; + (ad.title || &#x27;&#x27;), it.id, {noDm:true});
+    notifyAdminsInfo_(&#x27;📨 رزومه‌ی مستقیم برای «&#x27; + (ad.title || &#x27;&#x27;) + &#x27;»\n&#x27; + itemSummary_(it, u), &#x27;direct&#x27;);
+  } else {
+    notify_(u, &#x27;sent&#x27;, &#x27;رزومه‌ات ارسال شد&#x27;, &#x27;این آگهی از کانال آمده؛ رزومه‌ات را ادمین به کارفرما می‌رساند.&#x27;, it.id, {noDm:true});
+    notifyAdminsInfo_(&#x27;📨 رزومه برای آگهی «&#x27; + (ad ? ad.title : &#x27;&#x27;) + &#x27;» (صاحب آگهی در برنامه نیست؛ لطفاً دستی برسان)\n&#x27; + itemSummary_(it, u) + &#x27;\n\n&#x27; + it.text);
+  }
+}
+
+function approveItem_(id, actor) {
+  var t = table_(S_LIST), it = findIn_(t, &#x27;id&#x27;, id);
+  if (!it) return {ok:false, error:&#x27;notfound&#x27;};
+  if (it.deleted === &#x27;بله&#x27;) return {ok:false, error:&#x27;deleted&#x27;};
+  if (it.type === &#x27;membership&#x27;) return approveUser_(it.id, actor);
+  if (it.status === &#x27;approved&#x27; &amp;&amp; it.msg_id) return {ok:true, already:true, msgId:it.msg_id};
+  var res;
+  if (it.msg_id &amp;&amp; it.status !== &#x27;approved&#x27;) { // ویرایش‌شده‌ی منتشرشده: همان پست کانال به‌روز می‌شود، پست تازه نمی‌سازیم
+    var er = editChannel_(it.msg_id, itemPostText_(it));
+    res = er.ok ? {ok:true, msgId:it.msg_id} : postToChannel(itemPostText_(it));
+  } else res = postToChannel(itemPostText_(it));
+  if (!res.ok) return {ok:false, error:&#x27;telegram&#x27;, detail:res.detail};
+  it.reason = &#x27;&#x27;;
+  it.status = &#x27;approved&#x27;; it.msg_id = String(res.msgId); it.public = &#x27;بله&#x27;; if (it.vis !== &#x27;channel&#x27; &amp;&amp; it.type === &#x27;jobseeker&#x27;) it.vis = &#x27;channel&#x27;;
+  it.updated = now_(); save_(t, it);
+  editAdminMsgs_(it.tg, adminItemText_(it) + &#x27;\n\n✅ منتشر شد · &#x27; + actor);
+  it.tg = &#x27;&#x27;; save_(t, it);
+  var owner = it.owner ? find_(S_USERS, &#x27;mobile&#x27;, it.owner) : null;
+  if (owner) notify_(owner, &#x27;published&#x27;, it.type === &#x27;employer&#x27; ? &#x27;آگهی شما منتشر شد&#x27; : &#x27;رزومه شما منتشر شد&#x27;,
+    &#x27;«&#x27; + (it.title || &#x27;&#x27;) + &#x27;» حالا در کانال @JobVacencies و برنامه دیده می‌شود.&#x27;, it.id, {url:&#x27;https://t.me/&#x27; + CHANNEL.replace(&#x27;@&#x27;,&#x27;&#x27;) + &#x27;/&#x27; + it.msg_id, urlText:&#x27;دیدن در کانال&#x27;});
+  afterPublished_(it);
+  return {ok:true, msgId:res.msgId};
+}
+
+function rejectItem_(id, actor, reason) {
+  var t = table_(S_LIST), it = findIn_(t, &#x27;id&#x27;, id);
+  if (!it) return {ok:false, error:&#x27;notfound&#x27;};
+  if (it.status === &#x27;rejected&#x27; &amp;&amp; it.deleted === &#x27;بله&#x27;) return {ok:true, already:true};
+  reason = clean_(reason, 200);
+  it.status = &#x27;rejected&#x27;; it.deleted = &#x27;بله&#x27;; it.reason = reason; it.updated = now_(); save_(t, it);
+  if (it.msg_id) deleteFromChannel(it.msg_id);
+  editAdminMsgs_(it.tg, adminItemText_(it) + &#x27;\n\n❌ رد شد · &#x27; + actor + (reason ? &#x27;\nدلیل: &#x27; + reason : &#x27;&#x27;));
+  it.tg = &#x27;&#x27;; save_(t, it);
+  var owner = it.owner ? find_(S_USERS, &#x27;mobile&#x27;, it.owner) : null;
+  if (owner) notify_(owner, &#x27;rejected_item&#x27;, (it.type === &#x27;employer&#x27; ? &#x27;آگهی&#x27; : &#x27;رزومه&#x27;) + &#x27; شما تأیید نشد&#x27;,
+    &#x27;«&#x27; + (it.title || &#x27;&#x27;) + &#x27;» منتشر نشد.&#x27; + (reason ? &#x27;\nدلیل: &#x27; + reason : &#x27;&#x27;) + &#x27;\nمی‌توانی آن را از «ارسال‌های من» ویرایش و دوباره بفرستی. برای جزئیات به ادمین پیام بده: @arminia363&#x27;, it.id);
+  cacheDrop_();
+  return {ok:true};
+}
+
+function deleteItem_(id, actor) {
+  var t = table_(S_LIST), hit = false;
+  t.rows.forEach(function(it){
+    if (String(it.id) !== String(id)) return;
+    hit = true;
+    if (it.type === &#x27;membership&#x27; &amp;&amp; it.deleted !== &#x27;بله&#x27;) { var u = find_(S_USERS, &#x27;mobile&#x27;, normMobile_(it.id)); if (u &amp;&amp; u.status === &#x27;pending&#x27;) rejectUser_(u.mobile, actor, &#x27;rejected&#x27;); }
+    it.deleted = &#x27;بله&#x27;; it.updated = now_();
+    if (it.msg_id) { deleteFromChannel(it.msg_id); }
+    if (it.tg) { editAdminMsgs_(it.tg, adminItemText_(it) + &#x27;\n\n🗑 حذف شد · &#x27; + actor); it.tg = &#x27;&#x27;; }
+    save_(t, it);
+  });
+  cacheDrop_();
+  return hit ? {ok:true} : {ok:false, error:&#x27;notfound&#x27;};
+}
+
+function newItem_(o) {
+  var t = table_(S_LIST);
+  var it = {id:o.id || uid_(), type:o.type, title:o.title || &#x27;&#x27;, text:o.text || &#x27;&#x27;, public:o.public || &#x27;&#x27;, deleted:&#x27;&#x27;, status:o.status || &#x27;pending&#x27;,
+    msg_id:o.msg_id || &#x27;&#x27;, owner:o.owner || &#x27;&#x27;, cat:o.cat || normCats_((o.tags || &#x27;&#x27;) + &#x27; &#x27; + (o.text || &#x27;&#x27;)).join(&#x27; &#x27;), city:o.city || cityOf_(o.text),
+    tags:o.tags || &#x27;&#x27;, vis:o.vis || (o.type === &#x27;employer&#x27; ? &#x27;channel&#x27; : &#x27;&#x27;), target:o.target || &#x27;&#x27;, created:now_(), updated:now_(), src:o.src || &#x27;&#x27;, tg:&#x27;&#x27;, data:o.data || &#x27;&#x27;, reason:&#x27;&#x27;};
+  save_(t, it);
+  cacheDrop_();
+  return it;
+}
+
+function itemPostText_(it) {
+  var txt = String(it.text || &#x27;&#x27;);
+  if (it.type === &#x27;employer&#x27; &amp;&amp; it.owner &amp;&amp; txt.indexOf(&#x27;takhassosyab.ir&#x27;) &lt; 0) txt += &#x27;\n\n📩 ارسال رزومه از برنامه: &#x27; + SITE + &#x27;/jobs.html?id=&#x27; + it.id;
+  return txt;
+}
+
+/* =========================== تطبیق و اعلان =========================== */
+function afterPublished_(it) {
+  cacheDrop_();
+  var cats = String(it.cat || &#x27;&#x27;).split(&#x27; &#x27;).filter(String);
+  if (!cats.length) return 0;
+  var users = table_(S_USERS).rows, n = 0, sent = {};
+  var ads = it.type === &#x27;jobseeker&#x27; ? table_(S_LIST).rows.filter(function(a){ return a.type === &#x27;employer&#x27; &amp;&amp; a.owner &amp;&amp; a.deleted !== &#x27;بله&#x27; &amp;&amp; a.status === &#x27;approved&#x27;; }) : [];
+  users.forEach(function(u){
+    if (u.status !== &#x27;approved&#x27; || u.mobile === it.owner || sent[u.mobile] || n &gt;= 300) return;
+    var match = null;
+    if (it.type === &#x27;jobseeker&#x27; &amp;&amp; u.role === &#x27;employer&#x27;) {
+      ads.forEach(function(a){ if (!match &amp;&amp; a.owner === u.mobile &amp;&amp; overlap_(a.cat, cats) &amp;&amp; cityOk_(a.city, it.city)) match = a; });
+      if (!match &amp;&amp; overlap_(u.interests, cats) &amp;&amp; cityOk_(u.city, it.city)) match = {title:&#x27;&#x27;};
+      if (match) {
+        sent[u.mobile] = 1; n++;
+        notify_(u, &#x27;match&#x27;, &#x27;رزومه‌ی مرتبط&#x27; + (match.title ? &#x27; با آگهی «&#x27; + match.title + &#x27;»&#x27; : &#x27;&#x27;), (it.title || &#x27;رزومه&#x27;) + &#x27;\n&#x27; + firstLines_(it.text, 6), it.id,
+          {url:SITE + &#x27;/resumes.html?id=&#x27; + it.id, urlText:&#x27;مشاهده رزومه&#x27;});
+      }
+    } else if (it.type === &#x27;employer&#x27; &amp;&amp; u.role === &#x27;jobseeker&#x27;) {
+      if (overlap_(u.interests, cats) &amp;&amp; cityOk_(u.city, it.city)) {
+        sent[u.mobile] = 1; n++;
+        notify_(u, &#x27;match&#x27;, &#x27;آگهی مرتبط با تخصص تو&#x27;, (it.title || &#x27;آگهی استخدام&#x27;) + &#x27;\n&#x27; + firstLines_(it.text, 6), it.id,
+          {url:SITE + &#x27;/jobs.html?id=&#x27; + it.id, urlText:&#x27;مشاهده آگهی&#x27;});
+      }
+    }
+  });
+  return n;
+}
+
+function notify_(u, kind, title, body, ref, opt) {
+  opt = opt || {};
+  var t = table_(S_NOTIF);
+  save_(t, {id:uid_(), to:u.mobile, kind:kind, title:title, body:String(body || &#x27;&#x27;).slice(0, 3000), ref:ref || &#x27;&#x27;, created:now_(), read:&#x27;&#x27;});
+  if (u.tg_chat &amp;&amp; !opt.noDm) {
+    var msg = &#x27;🔔 &#x27; + title + &#x27;\n\n&#x27; + (opt.full ? body : firstLines_(body, 12));
+    var kb = opt.url ? {inline_keyboard:[[{text:opt.urlText || &#x27;باز کردن&#x27;, url:opt.url}]]} : null;
+    tgSend_(u.tg_chat, msg, kb);
+  }
+}
+
+function admins_() { return table_(S_ADMINS).rows.filter(function(a){ return a.chat_id; }); }
+
+/** گیرنده‌های اعلان ادمین: کاربران ادمین (موبایل/چت تلگرام) + چت‌های ثبت‌شده در برگه‌ی ادمین‌ها. */
+function adminTargets_() {
+  var out = [], byChat = {};
+  table_(S_USERS).rows.forEach(function(u){
+    if (!isAdminUser_(u)) return;
+    out.push({chat:u.tg_chat || &#x27;&#x27;, user:u});
+    if (u.tg_chat) byChat[u.tg_chat] = 1;
+  });
+  admins_().forEach(function(a){ var c = String(a.chat_id); if (!byChat[c]) { byChat[c] = 1; out.push({chat:c, user:null}); } });
+  return out;
+}
+function prefsOf_(u) {
+  var p = parseJ_(u &amp;&amp; u.prefs, {}), o = {};
+  if (!p || typeof p !== &#x27;object&#x27;) p = {};
+  Object.keys(PREF_DEFAULT).forEach(function(k){ o[k] = (k in p) ? (p[k] ? 1 : 0) : PREF_DEFAULT[k]; });
+  return o;
+}
+/** key = signup|ad|cv|private|direct|channel|daily. خروجی: [[chat,msgId],...] پیام‌های تلگرام ارسال‌شده. */
+function adminSend_(key, title, text, kb, ref, exclMobile) {
+  var pairs = [], ex = normMobile_(exclMobile), exu = ex &amp;&amp; OWNER_MOBILES.indexOf(ex) &lt; 0 ? find_(S_USERS, &#x27;mobile&#x27;, ex) : null;
+  adminTargets_().forEach(function(t){
+    var p = prefsOf_(t.user);
+    if (!p[key]) return;
+    // درخواست‌دهنده (اگر ادمین است) دکمه‌ی تأیید خودش را نمی‌گیرد؛ مالک مستثناست
+    if (exu &amp;&amp; ((t.user &amp;&amp; t.user.mobile === exu.mobile) || (exu.tg_chat &amp;&amp; String(t.chat) === String(exu.tg_chat)))) return;
+    if (p.tg &amp;&amp; t.chat) { var r = tgSend_(t.chat, text, kb); if (r &amp;&amp; r.ok) pairs.push([t.chat, r.result.message_id]); }
+    if (p.app &amp;&amp; t.user) save_(table_(S_NOTIF), {id:uid_(), to:t.user.mobile, kind:&#x27;admin_&#x27; + key, title:title, body:firstLines_(text, 4).slice(0, 600), ref:ref || &#x27;&#x27;, created:now_(), read:&#x27;&#x27;});
+  });
+  return pairs;
+}
+
+function notifyAdminsUser_(u, isNew) {
+  var text = adminUserText_(u);
+  saveAdminNotif_(&#x27;signup&#x27;, &#x27;درخواست عضویت: &#x27; + (u.name || u.mobile), roleFa_(u.role) + &#x27; · &#x27; + u.mobile, u.mobile);
+  var kb = {inline_keyboard:[[{text:&#x27;✅ تأیید&#x27;, callback_data:&#x27;u:a:&#x27; + u.mobile}, {text:&#x27;❌ رد&#x27;, callback_data:&#x27;u:r:&#x27; + u.mobile}]]};
+  var pairs = adminSend_(&#x27;signup&#x27;, &#x27;درخواست عضویت: &#x27; + (u.name || u.mobile), text, kb, u.mobile, u.mobile);
+  if (pairs.length) { var t = table_(S_USERS), x = findIn_(t, &#x27;mobile&#x27;, u.mobile); if (x) { x.tg = JSON.stringify(pairs.concat(parseJ_(x.tg, []))); save_(t, x); u.tg = x.tg; } }
+}
+
+function notifyAdminsItem_(it, u) {
+  var kind = it.type === &#x27;employer&#x27; ? &#x27;آگهی&#x27; : &#x27;رزومه&#x27;;
+  saveAdminNotif_(&#x27;item&#x27;, kind + &#x27; جدید: &#x27; + (it.title || &#x27;&#x27;), u ? (u.name + &#x27; · &#x27; + u.mobile) : &#x27;&#x27;, it.id);
+  var kb = {inline_keyboard:[[{text:&#x27;✅ انتشار در کانال&#x27;, callback_data:&#x27;i:a:&#x27; + it.id}, {text:&#x27;❌ رد&#x27;, callback_data:&#x27;i:r:&#x27; + it.id}]]};
+  var pairs = adminSend_(it.type === &#x27;employer&#x27; ? &#x27;ad&#x27; : &#x27;cv&#x27;, kind + &#x27; جدید: &#x27; + (it.title || &#x27;&#x27;), adminItemText_(it), kb, it.id, it.owner);
+  if (pairs.length) { var t = table_(S_LIST), x = findIn_(t, &#x27;id&#x27;, it.id); x.tg = JSON.stringify(pairs); save_(t, x); it.tg = x.tg; }
+}
+
+/** key: private | direct | channel */
+function notifyAdminsInfo_(text, key) {
+  key = key || &#x27;private&#x27;;
+  if (key !== &#x27;channel&#x27;) saveAdminNotif_(&#x27;info&#x27;, firstLines_(text, 1), firstLines_(text, 3), &#x27;&#x27;);
+  adminSend_(key, firstLines_(text, 1), text, null, &#x27;&#x27;);
+}
+
+function saveAdminNotif_(kind, title, body, ref) {
+  save_(table_(S_NOTIF), {id:uid_(), to:&#x27;admin&#x27;, kind:kind, title:title, body:body, ref:ref, created:now_(), read:&#x27;&#x27;});
+}
+
+function adminUserText_(u) {
+  return &#x27;👤 درخواست عضویت\nنام: &#x27; + (u.name || &#x27;-&#x27;) + &#x27;\nنقش: &#x27; + roleFa_(u.role) + &#x27;\nموبایل: &#x27; + u.mobile +
+    &#x27;\nتلگرام: &#x27; + (u.tg_chat ? (u.tg_user ? &#x27;@&#x27; + u.tg_user : &#x27;متصل&#x27;) + (vOk_(u) ? &#x27; (شماره تأییدشده)&#x27; : &#x27;&#x27;) : &#x27;متصل نشده&#x27;) + (vOk_(u) &amp;&amp; !u.tg_chat ? &#x27;\nشماره با پیامک تأیید شده ✅&#x27; : &#x27;&#x27;);
+}
+function adminItemText_(it) {
+  var head = (it.type === &#x27;employer&#x27; ? &#x27;🏢 آگهی استخدام برای تأیید&#x27; : &#x27;📄 رزومه برای تأیید&#x27;) + (it.msg_id &amp;&amp; it.status === &#x27;pending&#x27; ? &#x27; (ویرایش‌شده توسط فرستنده)&#x27; : &#x27;&#x27;);
+  return head + &#x27;\n\n&#x27; + String(it.text || &#x27;&#x27;).slice(0, 3200);
+}
+function itemSummary_(it, u) { return (it.title || &#x27;&#x27;) + &#x27;\n&#x27; + (u ? u.name + &#x27; · &#x27; + u.mobile : &#x27;&#x27;); }
+
+function editAdminMsgs_(tgJson, text, kb) {
+  parseJ_(tgJson, []).forEach(function(p){ var o = {chat_id:p[0], message_id:p[1], text:String(text).slice(0, 4000)}; if (kb) o.reply_markup = kb; tg_(&#x27;editMessageText&#x27;, o); });
+}
+
+/* =========================== تلگرام =========================== */
+function postToChannel(text) {
+  if (!text) { Logger.log(&#x27;متن خالی است&#x27;); return {ok:false, detail:&#x27;empty&#x27;}; }
+  var j = tg_(&#x27;sendMessage&#x27;, {chat_id:CHANNEL, text:String(text).slice(0, 4000), disable_web_page_preview:true});
+  if (j &amp;&amp; j.ok) return {ok:true, msgId:j.result.message_id};
+  return {ok:false, detail:(j &amp;&amp; j.description) || &#x27;no response&#x27;};
+}
+function deleteFromChannel(msgId) { if (msgId) tg_(&#x27;deleteMessage&#x27;, {chat_id:CHANNEL, message_id:Number(msgId)}); }
+function testChannel() { postToChannel(&#x27;🧪 تست اتصال ربات تخصص‌یاب&#x27;); }
+
+function tgSend_(chat, text, kb) {
+  var p = {chat_id:chat, text:String(text).slice(0, 4000), disable_web_page_preview:true};
+  if (kb) p.reply_markup = kb;
+  var r = tg_(&#x27;sendMessage&#x27;, p);
+  if (!r || (!r.ok &amp;&amp; (!r.error_code || r.error_code === 429 || r.error_code &gt;= 500))) { // خطای گذرا (شبکه/۴۲۹/۵xx): یک بار دیگر
+    try { Utilities.sleep(r &amp;&amp; r.parameters &amp;&amp; r.parameters.retry_after ? Math.min(3000, r.parameters.retry_after * 1000) : 800); } catch (e) {}
+    r = tg_(&#x27;sendMessage&#x27;, p);
+  }
+  tgNote_(chat, r);
+  return r;
+}
+/** نتیجه‌ی ارسال به تلگرام را ثبت می‌کند تا در پنل ادمین (کارت وضعیت) دیده شود: آخرین موفق، آخرین خطا، چت‌هایی که ربات را بسته‌اند. */
+function tgNote_(chat, r) {
+  try {
+    var p = PropertiesService.getScriptProperties(), c = String(chat);
+    if (r &amp;&amp; r.ok) {
+      p.setProperty(&#x27;TG_OK&#x27;, now_());
+      var bad = parseJ_(p.getProperty(&#x27;TG_BAD&#x27;), {});
+      if (bad[c]) { delete bad[c]; p.setProperty(&#x27;TG_BAD&#x27;, JSON.stringify(bad)); }
+      return;
+    }
+    var desc = String((r &amp;&amp; (r.description || r.error)) || &#x27;no response&#x27;).slice(0, 160);
+    p.setProperty(&#x27;TG_ERR&#x27;, now_() + &#x27; | &#x27; + c + &#x27; | &#x27; + desc);
+    p.setProperty(&#x27;TG_FAILS&#x27;, String((Number(p.getProperty(&#x27;TG_FAILS&#x27;)) || 0) + 1));
+    Logger.log(&#x27;ارسال تلگرام به &#x27; + c + &#x27; ناموفق: &#x27; + desc);
+    if (r &amp;&amp; (r.error_code === 403 || r.error_code === 400) &amp;&amp; /blocked|deactivated|chat not found|kicked/i.test(desc)) {
+      var b2 = parseJ_(p.getProperty(&#x27;TG_BAD&#x27;), {}); b2[c] = now_(); p.setProperty(&#x27;TG_BAD&#x27;, JSON.stringify(b2));
+    }
+  } catch (e) {}
+}
+function tgStatus_() {
+  var p = PropertiesService.getScriptProperties(), e = String(p.getProperty(&#x27;TG_ERR&#x27;) || &#x27;&#x27;).split(&#x27; | &#x27;), bad = parseJ_(p.getProperty(&#x27;TG_BAD&#x27;), {});
+  var names = {}; table_(S_USERS).rows.forEach(function(u){ if (u.tg_chat) names[String(u.tg_chat)] = u.name || u.mobile; });
+  admins_().forEach(function(a){ if (!names[String(a.chat_id)]) names[String(a.chat_id)] = a.name || a.username || &#x27;&#x27;; });
+  return {lastOk:p.getProperty(&#x27;TG_OK&#x27;) || &#x27;&#x27;, lastError:e.length &gt; 2 ? e.slice(2).join(&#x27; | &#x27;) : &#x27;&#x27;, lastErrorChat:e.length &gt; 2 ? e[1] : &#x27;&#x27;, lastErrorAt:e.length &gt; 2 ? e[0] : &#x27;&#x27;,
+    fails:Number(p.getProperty(&#x27;TG_FAILS&#x27;)) || 0, blocked:Object.keys(bad).map(function(c){ return {chat:c, name:names[c] || &#x27;&#x27;, at:bad[c]}; })};
+}
+
+function tg_(method, payload) {
+  var token = PropertiesService.getScriptProperties().getProperty(&#x27;BOT_TOKEN&#x27;);
+  if (!token) { Logger.log(&#x27;BOT_TOKEN ذخیره نشده&#x27;); return {ok:false, description:&#x27;no token&#x27;}; }
+  try {
+    var r = UrlFetchApp.fetch(&#x27;https://api.telegram.org/bot&#x27; + token + &#x27;/&#x27; + method,
+      {method:&#x27;post&#x27;, contentType:&#x27;application/json&#x27;, payload:JSON.stringify(payload || {}), muteHttpExceptions:true});
+    var j = JSON.parse(r.getContentText());
+    if (!j.ok &amp;&amp; method !== &#x27;editMessageText&#x27; &amp;&amp; method !== &#x27;deleteMessage&#x27;) Logger.log(&#x27;تلگرام &#x27; + method + &#x27;: &#x27; + r.getContentText());
+    return j;
+  } catch (err) { Logger.log(&#x27;تلگرام خطا &#x27; + method + &#x27;: &#x27; + err); return {ok:false, description:String(err)}; }
+}
+
+function botName_() {
+  var p = PropertiesService.getScriptProperties(), n = p.getProperty(&#x27;BOT_USERNAME&#x27;);
+  if (n) return n;
+  var r = tg_(&#x27;getMe&#x27;, {});
+  if (r &amp;&amp; r.ok) { n = r.result.username; p.setProperty(&#x27;BOT_USERNAME&#x27;, n); return n; }
+  return &#x27;Takhasosbot&#x27;;
+}
+function botLink_(payload) { return &#x27;https://t.me/&#x27; + botName_() + &#x27;?start=&#x27; + payload; }
+
+/** هر دقیقه با تریگر اجرا می‌شود: پیام‌ها و دکمه‌های ربات و پست‌های کانال را می‌خواند. */
+function tick() { pull_(true); try { dailySummary_(false); } catch (err) { Logger.log(&#x27;daily: &#x27; + err); } }
+
+/** خلاصه‌ی روزانه (ساعت ۹ صبح به بعد، یک بار در روز) برای ادمین‌هایی که روشنش کرده‌اند. */
+function dailySummary_(force) {
+  var p = PropertiesService.getScriptProperties(), today = now_().slice(0, 10);
+  if (!force &amp;&amp; (Number(now_().slice(11, 13)) &lt; 9 || p.getProperty(&#x27;DAILY_AT&#x27;) === today)) return 0;
+  p.setProperty(&#x27;DAILY_AT&#x27;, today);
+  return locked_(function(){
+    var us = table_(S_USERS).rows.filter(function(u){ return u.status === &#x27;pending&#x27;; }).length;
+    var its = table_(S_LIST).rows.filter(function(r){ return r.status === &#x27;pending&#x27; &amp;&amp; r.deleted !== &#x27;بله&#x27; &amp;&amp; (r.type === &#x27;employer&#x27; || r.type === &#x27;jobseeker&#x27;); });
+    var ads = its.filter(function(r){ return r.type === &#x27;employer&#x27;; }).length, cvs = its.length - ads;
+    if (!us &amp;&amp; !ads &amp;&amp; !cvs) return 0;
+    var text = &#x27;🗓 خلاصه‌ی روزانه تخصص‌یاب\nعضویت در انتظار: &#x27; + us + &#x27;\nآگهی در انتظار: &#x27; + ads + &#x27;\nرزومه در انتظار: &#x27; + cvs + &#x27;\nپنل: &#x27; + SITE + &#x27;/admin.html&#x27;;
+    adminSend_(&#x27;daily&#x27;, &#x27;خلاصه‌ی روزانه&#x27;, text, null, &#x27;&#x27;);
+    return 1;
+  });
+}
+
+function pull_(force) {
+  var p = PropertiesService.getScriptProperties();
+  var last = Number(p.getProperty(&#x27;TG_PULL_AT&#x27;) || 0), nowMs = new Date().getTime();
+  if (!force &amp;&amp; nowMs - last &lt; 4000) return 0;
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(5000)) return 0;
+  var n = 0;
+  _T = {};
+  try {
+    p.setProperty(&#x27;TG_PULL_AT&#x27;, String(nowMs));
+    var off = Number(p.getProperty(&#x27;TG_OFFSET&#x27;) || 0);
+    var r = tg_(&#x27;getUpdates&#x27;, {offset:off, timeout:0, limit:50, allowed_updates:[&#x27;message&#x27;,&#x27;callback_query&#x27;,&#x27;channel_post&#x27;]});
+    if (!r || !r.ok) return 0;
+    r.result.forEach(function(u){
+      try { handleUpdate_(u); n++; } catch (err) { Logger.log(&#x27;update &#x27; + u.update_id + &#x27;: &#x27; + err + &#x27;\n&#x27; + err.stack); }
+      p.setProperty(&#x27;TG_OFFSET&#x27;, String(u.update_id + 1));
+    });
+  } finally { lock.releaseLock(); }
+  return n;
+}
+
+function handleUpdate_(up) {
+  if (up.callback_query) return onCallback_(up.callback_query);
+  if (up.channel_post) return onChannelPost_(up.channel_post);
+  var m = up.message; if (!m || !m.chat || m.chat.type !== &#x27;private&#x27;) return;
+  var chat = String(m.chat.id), from = m.from || {}, text = String(m.text || &#x27;&#x27;).trim();
+  if (m.contact) return onContact_(m);
+  if (/^\/start\b/.test(text)) {
+    var arg = text.replace(/^\/start\s*/, &#x27;&#x27;);
+    if (arg.indexOf(&#x27;adm_&#x27;) === 0) {
+      if (arg.slice(4) === PropertiesService.getScriptProperties().getProperty(&#x27;ADMIN_LINK&#x27;)) return addAdmin_(m);
+      return tgSend_(chat, &#x27;لینک ادمین معتبر نیست.&#x27;);
+    }
+    if (arg.charAt(0) === &#x27;L&#x27;) return linkUser_(m, arg.slice(1));
+    if (arg.charAt(0) === &#x27;G&#x27;) return startLogin_(m, arg.slice(1));
+    return tgSend_(chat, &#x27;سلام! این ربات تخصص‌یاب است 👋\nآگهی‌ها و رزومه‌ها: &#x27; + SITE + &#x27;/enter.html\nکانال: &#x27; + CHANNEL,
+      {inline_keyboard:[[{text:&#x27;ورود به برنامه&#x27;, url:SITE + &#x27;/enter.html&#x27;}]]});
+  }
+  if (/^\/admin\b/.test(text)) {
+    if (text.replace(/^\/admin\s*/, &#x27;&#x27;) === ADMIN_KEY) return addAdmin_(m);
+    return tgSend_(chat, &#x27;رمز نادرست است.&#x27;);
+  }
+  if (isAdminChat_(chat)) return tgSend_(chat, &#x27;درخواست‌های جدید همین‌جا با دکمه‌ی ✅/❌ برایت می‌آید. پنل کامل: &#x27; + SITE + &#x27;/admin.html&#x27;);
+  return tgSend_(chat, &#x27;برای ثبت آگهی یا رزومه وارد برنامه شو: &#x27; + SITE + &#x27;/enter.html&#x27;);
+}
+
+function addAdmin_(m) {
+  var t = table_(S_ADMINS), chat = String(m.chat.id), a = findIn_(t, &#x27;chat_id&#x27;, chat), from = m.from || {};
+  if (!a) a = {chat_id:chat, added:now_()};
+  a.username = from.username || &#x27;&#x27;; a.name = ((from.first_name || &#x27;&#x27;) + &#x27; &#x27; + (from.last_name || &#x27;&#x27;)).trim();
+  save_(t, a);
+  tgSend_(chat, &#x27;✅ ادمین تخصص‌یاب شدی. از این به بعد درخواست‌های عضویت، آگهی‌ها و رزومه‌ها با دکمه‌ی تأیید/رد همین‌جا می‌آید.&#x27;);
+  return true;
+}
+function isAdminChat_(chat) { return !!find_(S_ADMINS, &#x27;chat_id&#x27;, String(chat)); }
+
+function linkUser_(m, code) {
+  var chat = String(m.chat.id), t = table_(S_USERS), u = code ? findIn_(t, &#x27;link_code&#x27;, code) : null;
+  if (!u) return tgSend_(chat, &#x27;این لینک معتبر نیست. از داخل برنامه دوباره «اتصال تلگرام» را بزن.&#x27;);
+  u.tg_chat = chat; u.tg_user = (m.from &amp;&amp; m.from.username) || &#x27;&#x27;; save_(t, u);
+  var msg = &#x27;سلام &#x27; + (u.name || &#x27;&#x27;) + &#x27;! تلگرامت به تخصص‌یاب وصل شد ✅\n&#x27;;
+  msg += u.status === &#x27;approved&#x27; ? (&#x27;عضویتت فعال است.\nلینک کانال: &#x27; + u.invite) : &#x27;درخواست عضویتت برای ادمین رفته؛ نتیجه همین‌جا خبرت می‌کنیم.&#x27;;
+  msg += &#x27;\n\nبرای امنیت بیشتر، با دکمه‌ی پایین شماره‌ات را تأیید کن.&#x27;;
+  tgSend_(chat, msg, {keyboard:[[{text:&#x27;📱 تأیید شماره موبایل&#x27;, request_contact:true}]], resize_keyboard:true, one_time_keyboard:true});
+  if (u.tg &amp;&amp; u.status === &#x27;pending&#x27;) editAdminMsgs_(u.tg, adminUserText_(u));
+  return true;
+}
+
+function startLogin_(m, nonce) {
+  var chat = String(m.chat.id), cache = CacheService.getScriptCache(), raw = cache.get(&#x27;ln_&#x27; + nonce);
+  if (!raw) return tgSend_(chat, &#x27;این لینک ورود منقضی شده؛ در برنامه دوباره «ورود» را بزن.&#x27;);
+  cache.put(&#x27;lchat_&#x27; + chat, nonce, 900);
+  return tgSend_(chat, &#x27;برای ورود به تخصص‌یاب، دکمه‌ی پایین را بزن تا شماره‌ات تأیید شود.&#x27;,
+    {keyboard:[[{text:&#x27;📱 ارسال شماره و ورود&#x27;, request_contact:true}]], resize_keyboard:true, one_time_keyboard:true});
+}
+
+function onContact_(m) {
+  var chat = String(m.chat.id), c = m.contact;
+  if (!c || String(c.user_id) !== String(m.from.id)) return tgSend_(chat, &#x27;لطفاً شماره‌ی خودت را با همان دکمه بفرست.&#x27;, {remove_keyboard:true});
+  var mobile = normMobile_(c.phone_number), t = table_(S_USERS), u = findIn_(t, &#x27;mobile&#x27;, mobile);
+  var cache = CacheService.getScriptCache(), nonce = cache.get(&#x27;lchat_&#x27; + chat);
+  if (!u) return tgSend_(chat, &#x27;با شماره‌ی &#x27; + mobile + &#x27; هنوز در تخصص‌یاب ثبت‌نام نشده. از برنامه ثبت‌نام کن: &#x27; + SITE + &#x27;/register.html&#x27;, {remove_keyboard:true});
+  if (u.tg_chat &amp;&amp; u.tg_chat !== chat &amp;&amp; !nonce) return tgSend_(chat, &#x27;این شماره به حساب تلگرام دیگری وصل است.&#x27;, {remove_keyboard:true});
+  u.tg_chat = chat; u.tg_user = m.from.username || &#x27;&#x27;; u.verified = &#x27;1&#x27;; save_(t, u);
+  if (nonce) {
+    var raw = cache.get(&#x27;ln_&#x27; + nonce);
+    if (raw) { var o = JSON.parse(raw); if (o.mobile === mobile) { o.ok = true; cache.put(&#x27;ln_&#x27; + nonce, JSON.stringify(o), 600); cache.remove(&#x27;lchat_&#x27; + chat);
+      return tgSend_(chat, &#x27;✅ ورود تأیید شد. به برنامه برگرد.&#x27;, {remove_keyboard:true}); }
+      return tgSend_(chat, &#x27;شماره‌ی تلگرام با شماره‌ای که در برنامه زدی یکی نیست.&#x27;, {remove_keyboard:true}); }
+  }
+  return tgSend_(chat, &#x27;✅ شماره‌ات تأیید شد. ممنون!&#x27;, {remove_keyboard:true});
+}
+
+function onCallback_(q) {
+  var chat = String((q.message &amp;&amp; q.message.chat &amp;&amp; q.message.chat.id) || q.from.id);
+  var admin = find_(S_ADMINS, &#x27;chat_id&#x27;, String(q.from.id));
+  if (!admin) { tg_(&#x27;answerCallbackQuery&#x27;, {callback_query_id:q.id, text:&#x27;فقط ادمین‌ها&#x27;, show_alert:true}); return; }
+  var who = q.from.username ? &#x27;@&#x27; + q.from.username : (q.from.first_name || &#x27;ادمین&#x27;);
+  var p = String(q.data || &#x27;&#x27;).split(&#x27;:&#x27;), res = {ok:false};
+  // (قفل اسکریپت از قبل در pull_ گرفته شده است)
+  var tgtMobile = p[0] === &#x27;u&#x27; ? p[2] : (p[0] === &#x27;i&#x27; ? targetMobileOfItem_(p.slice(2).join(&#x27;:&#x27;)) : &#x27;&#x27;);
+  if (tgtMobile &amp;&amp; selfByChat_(q.from.id, tgtMobile)) { tg_(&#x27;answerCallbackQuery&#x27;, {callback_query_id:q.id, text:SELF_TEXT, show_alert:true}); return; }
+  if (p[0] === &#x27;u&#x27;) res = p[1] === &#x27;a&#x27; ? approveUser_(p[2], who) : rejectUser_(p[2], who, &#x27;rejected&#x27;);
+  else if (p[0] === &#x27;i&#x27;) res = p[1] === &#x27;a&#x27; ? approveItem_(p.slice(2).join(&#x27;:&#x27;), who) : rejectItem_(p.slice(2).join(&#x27;:&#x27;), who);
+  tg_(&#x27;answerCallbackQuery&#x27;, {callback_query_id:q.id, text:res.ok ? (res.already ? &#x27;قبلاً انجام شده&#x27; : &#x27;انجام شد ✅&#x27;) : (res.error === &#x27;self&#x27; ? SELF_TEXT : &#x27;خطا: &#x27; + (res.detail || res.error || &#x27;&#x27;))});
+  if (res.ok &amp;&amp; res.already &amp;&amp; q.message) tg_(&#x27;editMessageReplyMarkup&#x27;, {chat_id:chat, message_id:q.message.message_id, reply_markup:{inline_keyboard:[]}});
+}
+
+function onChannelPost_(m) {
+  var uname = m.chat &amp;&amp; m.chat.username ? &#x27;@&#x27; + m.chat.username : &#x27;&#x27;;
+  if (uname.toLowerCase() !== CHANNEL.toLowerCase()) return;
+  var text = String(m.text || m.caption || &#x27;&#x27;);
+  if (!text || text.indexOf(&#x27;takhassosyab.ir&#x27;) &gt;= 0) return; // پست‌های معرفی خود کانال
+  var hasContact = /09\d{9}|۰۹[۰-۹]{9}|@[A-Za-z]\w{3,}|t\.me\//.test(text);
+  var t = table_(S_LIST);
+  if (findIn_(t, &#x27;msg_id&#x27;, String(m.message_id))) return;
+  var type = /#کارجو|#رزومه|#جویای_کار/.test(text) ? &#x27;jobseeker&#x27; : ((/#استخدام/.test(text) || (/استخدام|نیازمند|دعوت به همکاری/.test(text) &amp;&amp; hasContact)) ? &#x27;employer&#x27; : &#x27;&#x27;);
+  if (!type) return;
+  var it = newItem_({type:type, title:titleFromText_(text), text:text, status:&#x27;approved&#x27;, public:&#x27;بله&#x27;, msg_id:String(m.message_id), src:&#x27;channel&#x27;});
+  notifyAdminsInfo_(&#x27;📢 &#x27; + (type === &#x27;employer&#x27; ? &#x27;آگهی&#x27; : &#x27;رزومه&#x27;) + &#x27; در کانال شناسایی شد\n&#x27; + (it.title || &#x27;&#x27;) + &#x27;\nhttps://t.me/&#x27; + CHANNEL.replace(&#x27;@&#x27;, &#x27;&#x27;) + &#x27;/&#x27; + m.message_id, &#x27;channel&#x27;);
+  afterPublished_(it);
+}
+
+/* =========================== سازگاری با نسخه‌ی قبلی =========================== */
+function legacyList_(admin) {
+  var out = [];
+  table_(S_LIST).rows.forEach(function(r){
+    if (!r.id || r.id === &#x27;id&#x27;) return;
+    if (r.type === &#x27;membership&#x27;) { out.push({id:r.id, type:&#x27;membership&#x27;, title:&#x27;&#x27;, text:&#x27;&#x27;, public:r.public, deleted:r.deleted}); return; }
+    var st = r.status || &#x27;&#x27;;
+    if (!admin &amp;&amp; st !== &#x27;approved&#x27; &amp;&amp; st !== &#x27;&#x27;) return;
+    var it = {id:r.id, type:r.type, title:r.title, text:r.text, public:r.public, deleted:r.deleted};
+    if (admin &amp;&amp; (st === &#x27;private&#x27; || st === &#x27;direct&#x27; || st === &#x27;rejected&#x27;)) return; // نسخه‌ی قدیمی پنل نباید رزومه‌ی خصوصی را منتشر کند
+    if (admin) it.status = st;
+    out.push(it);
+  });
+  return out;
+}
+
+function legacySave_(d) {
+  var admin = d.key === ADMIN_KEY;
+  if (d.type === &#x27;membership&#x27;) {
+    if (d.public === &#x27;تأیید&#x27;) { if (!admin) return {ok:false, error:&#x27;key&#x27;}; return locked_(function(){ return approveUser_(d.id, &#x27;پنل&#x27;); }); }
+    return locked_(function(){
+      var mobile = normMobile_(d.id) || normMobile_(d.text);
+      if (!mobile) return {ok:false, error:&#x27;mobile&#x27;};
+      var t = table_(S_USERS), u = findIn_(t, &#x27;mobile&#x27;, mobile), isNew = !u;
+      if (!u) u = {mobile:mobile, created:now_(), status:&#x27;pending&#x27;, role:&#x27;&#x27;, link_code:rand_(10)};
+      if (d.title &amp;&amp; d.title !== &#x27;تأیید&#x27;) u.name = clean_(d.title, 60);
+      save_(t, u); legacyMemberRow_(u);
+      if (isNew) notifyAdminsUser_(u, true);
+      return {ok:true};
+    });
+  }
+  if (!admin) return {ok:false, error:&#x27;key&#x27;};
+  return API.a_add(d);
+}
+
+function legacyForm_(d) {
+  return locked_(function(){
+    if (d.type === &#x27;membership&#x27;) return legacySave_({type:&#x27;membership&#x27;, id:d.contact || d.mobile, title:d.name || d.title, text:d.text});
+    var text = clean_(d.text, 4000, true);
+    if (text.length &lt; 10) return {ok:false, error:&#x27;text&#x27;};
+    var mobile = normMobile_(d.contact || &#x27;&#x27;), owner = mobile ? find_(S_USERS, &#x27;mobile&#x27;, mobile) : null;
+    var vis = d.type === &#x27;employer&#x27; || d.public === &#x27;بله&#x27; ? &#x27;channel&#x27; : &#x27;admin&#x27;;
+    var it = newItem_({type:d.type, title:clean_(d.title || d.name, 120), text:text, owner:owner ? owner.mobile : &#x27;&#x27;, status:vis === &#x27;channel&#x27; ? &#x27;pending&#x27; : &#x27;private&#x27;,
+      vis:vis, public:vis === &#x27;channel&#x27; ? &#x27;بله&#x27; : &#x27;&#x27;, tags:clean_(d.tags, 300), city:clean_(d.city, 60), src:&#x27;form-v1&#x27;, data:JSON.stringify(d).slice(0, 20000)});
+    rawLog_(d.type, it, d.contact);
+    if (it.status === &#x27;pending&#x27;) notifyAdminsItem_(it, owner); else notifyAdminsInfo_(&#x27;📥 رزومه فقط برای ادمین\n&#x27; + itemSummary_(it, owner), &#x27;private&#x27;);
+    return {ok:true, id:it.id};
+  });
+}
+
+function legacyMemberRow_(u) {
+  var t = table_(S_LIST), row = null;
+  t.rows.forEach(function(r){ if (r.type === &#x27;membership&#x27; &amp;&amp; normMobile_(r.id) === u.mobile &amp;&amp; r.deleted !== &#x27;بله&#x27;) { if (!row) row = r; else { r.deleted = &#x27;بله&#x27;; save_(t, r); } } });
+  if (!row) row = {id:u.mobile, type:&#x27;membership&#x27;, created:now_(), status:&#x27;approved&#x27;};
+  row.title = u.name || &#x27;&#x27;; row.text = (u.name || &#x27;&#x27;) + &#x27; &#x27; + u.mobile;
+  row.public = u.status === &#x27;approved&#x27; ? &#x27;تأیید&#x27; : &#x27;در انتظار&#x27;;
+  row.deleted = (u.status === &#x27;rejected&#x27; || u.status === &#x27;blocked&#x27;) ? &#x27;بله&#x27; : &#x27;&#x27;;
+  row.updated = now_();
+  save_(t, row);
+}
+
+function rawLog_(type, it, contact) {
+  var tabs = {employer:&#x27;کارفرما&#x27;, jobseeker:&#x27;کارجو&#x27;};
+  var sh = rawSheet_(tabs[type] || &#x27;کارفرما&#x27;, [&#x27;تاریخ&#x27;,&#x27;نوع&#x27;,&#x27;عنوان&#x27;,&#x27;متن&#x27;,&#x27;تماس&#x27;,&#x27;اجازه&#x27;]);
+  sh.appendRow([now_(), type, it.title, it.text, contact || &#x27;&#x27;, it.vis || &#x27;&#x27;].map(cell_));
+}
+function rawSheet_(name, headers) {
+  var ss = SpreadsheetApp.getActive(), sh = ss.getSheetByName(name);
+  if (!sh) sh = ss.insertSheet(name);
+  if (!sh.getLastRow()) sh.appendRow(headers);
+  return sh;
+}
+
+/* =========================== پنل ادمین =========================== */
+function adminList_() {
+  var users = table_(S_USERS).rows.filter(function(u){ return u.verified !== &#x27;w&#x27;; }).map(function(u){ return {mobile:u.mobile, name:u.name, role:u.role, status:u.status, created:u.created,
+    approved_at:u.approved_at, reason:u.reason || &#x27;&#x27;, tg:!!u.tg_chat, tg_user:u.tg_user, verified:vOk_(u), city:u.city, interests:u.interests, last_seen:u.last_seen, admin:isAdminUser_(u)}; }).reverse();
+  var byMobile = {}; users.forEach(function(u){ byMobile[u.mobile] = u; });
+  var items = table_(S_LIST).rows.filter(function(r){ return r.id &amp;&amp; r.id !== &#x27;id&#x27; &amp;&amp; r.type !== &#x27;membership&#x27; &amp;&amp; r.deleted !== &#x27;بله&#x27;; })
+    .map(function(r){ var o = byMobile[r.owner]; return {id:r.id, type:r.type, title:r.title, text:r.text, status:r.status || &#x27;approved&#x27;, vis:r.vis, target:r.target,
+      msg_id:r.msg_id, cat:r.cat, city:r.city, created:r.created, updated:r.updated, src:r.src, reason:r.reason || &#x27;&#x27;, owner:r.owner, ownerName:o ? o.name : &#x27;&#x27;}; }).reverse();
+  var notifs = table_(S_NOTIF).rows.filter(function(n){ return n.to === &#x27;admin&#x27;; }).slice(-40).reverse();
+  var st = stats_(table_(S_USERS).rows, table_(S_LIST).rows);
+  var ads = admins_().map(function(a){ return {name:a.name, username:a.username}; });
+  var p = PropertiesService.getScriptProperties();
+  if (!p.getProperty(&#x27;ADMIN_LINK&#x27;)) p.setProperty(&#x27;ADMIN_LINK&#x27;, rand_(12));
+  return {ok:true, users:users, items:items, notifs:notifs, admins:ads, adminPeople:adminPeople_(), adminLink:botLink_(&#x27;adm_&#x27; + p.getProperty(&#x27;ADMIN_LINK&#x27;)),
+    trigger:!!p.getProperty(&#x27;SETUP_AT&#x27;), v:API_VERSION, features:features_(), stats:st, tgStatus:tgStatus_()};
+}
+/* ----- ادمین نباید درخواست/آگهی/رزومه‌ی خودش را تأیید یا رد کند (فقط مالک؛ و حالت رمز پنل ADMIN_KEY آزاد است) ----- */
+var SELF_ERR = {ok:false, error:&#x27;self&#x27;};
+var SELF_TEXT = &#x27;نمی‌توانی درخواست خودت را تأیید کنی&#x27;;
+/** کاربرِ توکن‌دار که ادمین است و مشمول محدودیت می‌شود؛ با رمز پنل یا برای مالک: null. */
+function actorByToken_(d) {
+  return null; // Armin: self-approval by admins is allowed
+  if (!d || d.key === ADMIN_KEY) return null;
+  var u = auth_(d);
+  if (!u || OWNER_MOBILES.indexOf(u.mobile) &gt;= 0) return null;
+  return u;
+}
+function selfByToken_(d, mobile) { var u = actorByToken_(d); return !!(u &amp;&amp; normMobile_(mobile) === u.mobile); }
+/** موبایل صاحبِ یک ردیف فهرست (آگهی/رزومه‌ی کاربر یا ردیف عضویت). */
+function targetMobileOfItem_(id) {
+  var it = find_(S_LIST, &#x27;id&#x27;, id);
+  if (!it) return &#x27;&#x27;;
+  return it.type === &#x27;membership&#x27; ? normMobile_(it.id) : (it.owner || &#x27;&#x27;);
+}
+/** آیا ادمینی که با این چت تلگرام کار می‌کند، همان صاحب هدف است؟ (مالک مستثناست) */
+function selfByChat_(chatId, mobile) {
+  return false; // Armin: self-approval by admins is allowed
+  mobile = normMobile_(mobile);
+  if (!mobile || OWNER_MOBILES.indexOf(mobile) &gt;= 0) return false;
+  var u = find_(S_USERS, &#x27;mobile&#x27;, mobile);
+  return !!(u &amp;&amp; u.tg_chat &amp;&amp; String(u.tg_chat) === String(chatId));
+}
+/** ادمین بودن یا با رمز پنل (ADMIN_KEY) یا با توکن کاربری که ادمین است. رمز فقط سمت سرور می‌ماند. */
+function isAdmin_(d) {
+  if (!d) return false;
+  if (d.key === ADMIN_KEY) return true;
+  var u = auth_(d);
+  return !!(u &amp;&amp; isAdminUser_(u));
+}
+var _AM = null;
+function adminMobiles_() {
+  if (_AM) return _AM;
+  var raw = PropertiesService.getScriptProperties().getProperty(&#x27;ADMIN_MOBILES&#x27;) || &#x27;&#x27;, out = OWNER_MOBILES.slice();
+  raw.split(&#x27;,&#x27;).forEach(function(m){ m = normMobile_(m); if (m &amp;&amp; out.indexOf(m) &lt; 0) out.push(m); });
+  return (_AM = out);
+}
+/** کاربر ادمین است اگر: چت تلگرامش در «ادمین‌ها» ثبت است؛ یا موبایلش در فهرست ادمین‌هاست.
+ *  امنیت: مالک (آرمین) باید تأییدشده باشد؛ بقیه باید تأییدشده و «شماره‌ی تأییدشده با تلگرام» باشند تا کسی با ثبت‌نام شماره‌ی ادمین، ادمین نشود. */
+function isAdminUser_(u) {
+  if (!u || u.status === &#x27;blocked&#x27;) return false;
+  if (u.tg_chat &amp;&amp; isAdminChat_(u.tg_chat)) return true;
+  if (u.status !== &#x27;approved&#x27;) return false;
+  if (OWNER_MOBILES.indexOf(u.mobile) &gt;= 0) return true;
+  return adminMobiles_().indexOf(u.mobile) &gt;= 0 &amp;&amp; vOk_(u);
+}
+function setAdminMobile_(mobile, on) {
+  var m = normMobile_(mobile); if (!m) return {ok:false, error:&#x27;mobile&#x27;};
+  if (!on &amp;&amp; OWNER_MOBILES.indexOf(m) &gt;= 0) return {ok:false, error:&#x27;owner&#x27;};
+  var p = PropertiesService.getScriptProperties(), list = adminMobiles_().filter(function(x){ return OWNER_MOBILES.indexOf(x) &lt; 0 &amp;&amp; x !== m; });
+  if (on &amp;&amp; OWNER_MOBILES.indexOf(m) &lt; 0) list.push(m);
+  p.setProperty(&#x27;ADMIN_MOBILES&#x27;, list.join(&#x27;,&#x27;));
+  _AM = null;
+  var u = find_(S_USERS, &#x27;mobile&#x27;, m);
+  if (on &amp;&amp; u) notify_(u, &#x27;admin_role&#x27;, &#x27;تو ادمین تخصص‌یاب شدی&#x27;, &#x27;از بخش «حساب من» به پنل ادمین و تنظیمات اعلان دسترسی داری.&#x27;, &#x27;&#x27;, {url:SITE + &#x27;/admin.html&#x27;, urlText:&#x27;پنل ادمین&#x27;});
+  return {ok:true, admins:adminPeople_(), registered:!!u, verified:!!(u &amp;&amp; vOk_(u))};
+}
+function adminPeople_() {
+  return adminMobiles_().map(function(m){ var u = find_(S_USERS, &#x27;mobile&#x27;, m); return {mobile:m, name:u ? u.name : &#x27;&#x27;, owner:OWNER_MOBILES.indexOf(m) &gt;= 0, registered:!!u, verified:!!(u &amp;&amp; vOk_(u)), active:!!(u &amp;&amp; isAdminUser_(u))}; });
+}
+
+/* =========================== v2.1: دلیل رد، ویرایش، عملیات گروهی، پیش‌نمایش، همگام‌سازی =========================== */
+function normText_(s) {
+  return toEn_(String(s || &#x27;&#x27;)).replace(/ي/g, &#x27;ی&#x27;).replace(/ك/g, &#x27;ک&#x27;).replace(/[\u200c\u200d\u064B-\u0652\u0640]/g, &#x27;&#x27;).replace(/\s+/g, &#x27; &#x27;).trim().toLowerCase();
+}
+function ms_(s) { var n = new Date(String(s || &#x27;&#x27;).replace(&#x27; &#x27;, &#x27;T&#x27;) + &#x27;+03:30&#x27;).getTime(); return isNaN(n) ? 0 : n; }
+
+/** همان فرستنده + همان متن (نرمال‌شده) در ۲۴ ساعت گذشته ← ردیف موجود برگردانده می‌شود (ثبت دوباره نمی‌خورد). */
+function dupOf_(owner, type, target, text) {
+  var key = normText_(text), cutoff = fmtDate_(new Date(new Date().getTime() - 86400000)), rows = table_(S_LIST).rows;
+  for (var i = rows.length - 1; i &gt;= 0; i--) {
+    var r = rows[i];
+    if (r.owner !== owner || r.type !== type || r.deleted === &#x27;بله&#x27; || String(r.created || &#x27;&#x27;) &lt; cutoff) continue;
+    if (String(r.target || &#x27;&#x27;) !== String(target || &#x27;&#x27;)) continue;
+    if (normText_(r.text) === key) return r;
+  }
+  return null;
+}
+
+function editChannel_(msgId, text) {
+  var j = tg_(&#x27;editMessageText&#x27;, {chat_id:CHANNEL, message_id:Number(msgId), text:String(text).slice(0, 4000), disable_web_page_preview:true});
+  if (j &amp;&amp; !j.ok &amp;&amp; /not modified/i.test(String(j.description || &#x27;&#x27;))) return {ok:true, same:true};
+  return j || {ok:false};
+}
+
+function editItem_(d, actor) {
+  var t = table_(S_LIST), it = findIn_(t, &#x27;id&#x27;, d.id);
+  if (!it) return {ok:false, error:&#x27;notfound&#x27;};
+  if (it.type === &#x27;membership&#x27;) return {ok:false, error:&#x27;type&#x27;};
+  if (it.deleted === &#x27;بله&#x27;) return {ok:false, error:&#x27;deleted&#x27;};
+  var changed = [];
+  if (d.title != null) { var ti = clean_(d.title, 120); if (ti !== it.title) { it.title = ti; changed.push(&#x27;title&#x27;); } }
+  if (d.text != null) {
+    var tx = clean_(d.text, 4000, true);
+    if (tx.length &lt; 10) return {ok:false, error:&#x27;text&#x27;};
+    if (tx !== it.text) { it.text = tx; changed.push(&#x27;text&#x27;); }
+  }
+  if (d.city != null) { var ci = clean_(d.city, 60); if (ci !== it.city) { it.city = ci; changed.push(&#x27;city&#x27;); } }
+  if (d.cat != null) { var ca = normCats_(String(d.cat)).join(&#x27; &#x27;); if (ca !== it.cat) { it.cat = ca; changed.push(&#x27;cat&#x27;); } }
+  else if (changed.indexOf(&#x27;text&#x27;) &gt;= 0) { it.cat = normCats_((it.tags || &#x27;&#x27;) + &#x27; &#x27; + it.text).join(&#x27; &#x27;); }
+  if (!changed.length) return {ok:true, unchanged:true};
+  it.updated = now_(); save_(t, it);
+  var channel = null;
+  if (it.msg_id &amp;&amp; it.status === &#x27;approved&#x27;) { var r = editChannel_(it.msg_id, itemPostText_(it)); channel = !!(r &amp;&amp; r.ok); }
+  if (it.status === &#x27;pending&#x27; &amp;&amp; it.tg) editAdminMsgs_(it.tg, adminItemText_(it) + &#x27;\n\n✏️ ویرایش شد · &#x27; + actor,
+    {inline_keyboard:[[{text:&#x27;✅ انتشار در کانال&#x27;, callback_data:&#x27;i:a:&#x27; + it.id}, {text:&#x27;❌ رد&#x27;, callback_data:&#x27;i:r:&#x27; + it.id}]]});
+  var owner = it.owner ? find_(S_USERS, &#x27;mobile&#x27;, it.owner) : null;
+  if (owner) notify_(owner, &#x27;edited&#x27;, (it.type === &#x27;employer&#x27; ? &#x27;آگهی&#x27; : &#x27;رزومه&#x27;) + &#x27; شما ویرایش شد&#x27;, &#x27;ادمین متن «&#x27; + (it.title || &#x27;&#x27;) + &#x27;» را اصلاح کرد&#x27; + (channel ? &#x27; و پست کانال هم به‌روز شد.&#x27; : &#x27;.&#x27;), it.id, {noDm:true});
+  saveAdminNotif_(&#x27;info&#x27;, &#x27;✏️ ویرایش &#x27; + (it.type === &#x27;employer&#x27; ? &#x27;آگهی&#x27; : &#x27;رزومه&#x27;) + &#x27; توسط &#x27; + actor, (it.title || &#x27;&#x27;) + &#x27; · &#x27; + changed.join(&#x27;، &#x27;), it.id);
+  Logger.log(&#x27;ویرایش &#x27; + it.id + &#x27; توسط &#x27; + actor + &#x27;: &#x27; + changed.join(&#x27;,&#x27;));
+  cacheDrop_();
+  return {ok:true, id:it.id, changed:changed, channel:channel, item:{id:it.id, title:it.title, text:it.text, cat:it.cat, city:it.city}};
+}
+
+function bulk_(d) {
+  var op = d.op === &#x27;reject&#x27; ? &#x27;reject&#x27; : (d.op === &#x27;approve&#x27; ? &#x27;approve&#x27; : &#x27;&#x27;);
+  if (!op) return {ok:false, error:&#x27;op&#x27;};
+  var us = (d.users instanceof Array ? d.users : []).slice(0, 200), its = (d.items instanceof Array ? d.items : []).slice(0, 200);
+  if (us.length + its.length &gt; 30) return {ok:false, error:&#x27;limit&#x27;};
+  var results = [], done = 0, reason = clean_(d.reason, 200);
+  var me = actorByToken_(d);
+  us.forEach(function(m){
+    var r; try { if (me &amp;&amp; normMobile_(m) === me.mobile) r = SELF_ERR; else r = op === &#x27;approve&#x27; ? approveUser_(m, &#x27;پنل · گروهی&#x27;) : rejectUser_(m, &#x27;پنل · گروهی&#x27;, &#x27;rejected&#x27;, reason); } catch (e) { r = {ok:false, error:&#x27;server&#x27;}; }
+    if (r.ok) done++; results.push({t:&#x27;u&#x27;, id:m, ok:!!r.ok, error:r.ok ? &#x27;&#x27; : (r.error || &#x27;&#x27;)});
+  });
+  its.forEach(function(id){
+    var r; try { if (me &amp;&amp; targetMobileOfItem_(id) === me.mobile) r = SELF_ERR; else r = op === &#x27;approve&#x27; ? approveItem_(id, &#x27;پنل · گروهی&#x27;) : rejectItem_(id, &#x27;پنل · گروهی&#x27;, reason); } catch (e) { r = {ok:false, error:&#x27;server&#x27;}; }
+    if (r.ok) done++; results.push({t:&#x27;i&#x27;, id:id, ok:!!r.ok, error:r.ok ? &#x27;&#x27; : (r.error || &#x27;&#x27;)});
+  });
+  return {ok:true, done:done, failed:results.length - done, results:results};
+}
+
+/** متنی که دقیقاً در کانال گذاشته می‌شود. با d.text می‌شود ویرایشِ ذخیره‌نشده را هم دید. */
+function preview_(d) {
+  var it = d.id ? find_(S_LIST, &#x27;id&#x27;, d.id) : null;
+  if (d.id &amp;&amp; !it) return {ok:false, error:&#x27;notfound&#x27;};
+  var o = it ? {type:it.type, owner:it.owner, id:it.id, text:it.text} : {type:d.type === &#x27;jobseeker&#x27; ? &#x27;jobseeker&#x27; : &#x27;employer&#x27;, owner:d.owner || &#x27;&#x27;, id:&#x27;PREVIEW&#x27;, text:&#x27;&#x27;};
+  if (d.text != null) o.text = String(d.text).slice(0, 20000);
+  var text = itemPostText_(o);
+  return {ok:true, text:text, chars:text.length, over:text.length &gt; 4000, link:text.indexOf(&#x27;/jobs.html?id=&#x27;) &gt;= 0 &amp;&amp; o.text.indexOf(&#x27;takhassosyab.ir&#x27;) &lt; 0,
+    channel:CHANNEL, posted:!!(it &amp;&amp; it.msg_id &amp;&amp; it.status === &#x27;approved&#x27;)};
+}
+
+/* ----- کاربر: ویرایش، بستن، تمدید ----- */
+function myItem_(d) {
+  var u = auth_(d); if (!u) return {err:{ok:false, error:&#x27;auth&#x27;}};
+  var t = table_(S_LIST), it = findIn_(t, &#x27;id&#x27;, d.id);
+  if (!it || it.owner !== u.mobile || (it.type !== &#x27;employer&#x27; &amp;&amp; it.type !== &#x27;jobseeker&#x27;)) return {err:{ok:false, error:&#x27;notfound&#x27;}};
+  if (u.status === &#x27;blocked&#x27;) return {err:{ok:false, error:&#x27;status&#x27;}};
+  return {u:u, t:t, it:it};
+}
+function myEdit_(d) {
+  var c = myItem_(d); if (c.err) return c.err;
+  var it = c.it, t = c.t, u = c.u;
+  if ([&#x27;pending&#x27;, &#x27;approved&#x27;, &#x27;closed&#x27;, &#x27;private&#x27;, &#x27;rejected&#x27;].indexOf(it.status) &lt; 0) return {ok:false, error:&#x27;status&#x27;};
+  var text = clean_(d.text != null ? d.text : it.text, 4000, true);
+  if (text.length &lt; 20) return {ok:false, error:&#x27;text&#x27;};
+  if (d.title != null) it.title = clean_(d.title, 120);
+  it.text = text;
+  if (d.tags != null) it.tags = clean_(d.tags, 300);
+  if (d.city != null) it.city = clean_(d.city, 60);
+  it.cat = normCats_((it.tags || &#x27;&#x27;) + &#x27; &#x27; + (d.cat || &#x27;&#x27;) + &#x27; &#x27; + text).join(&#x27; &#x27;);
+  if (d.fields &amp;&amp; typeof d.fields === &#x27;object&#x27;) it.data = JSON.stringify(d.fields).slice(0, 20000);
+  it.status = it.status === &#x27;private&#x27; ? &#x27;private&#x27; : &#x27;pending&#x27;;
+  it.deleted = &#x27;&#x27;; it.reason = &#x27;&#x27;; it.updated = now_();
+  save_(t, it); cacheDrop_();
+  if (it.status === &#x27;pending&#x27;) notifyAdminsItem_(it, u);
+  else notifyAdminsInfo_(&#x27;✏️ رزومه‌ی ویرایش‌شده (فقط برای ادمین)\n&#x27; + itemSummary_(it, u), &#x27;private&#x27;);
+  return {ok:true, id:it.id, status:it.status};
+}
+function myClose_(d, close) {
+  var c = myItem_(d); if (c.err) return c.err;
+  var it = c.it, t = c.t, u = c.u;
+  if (close) {
+    if ([&#x27;approved&#x27;, &#x27;pending&#x27;, &#x27;private&#x27;].indexOf(it.status) &lt; 0) return {ok:false, error:&#x27;status&#x27;};
+    var hired = !!d.hired;
+    it.status = &#x27;closed&#x27;; it.reason = hired ? &#x27;hired&#x27; : &#x27;closed&#x27;; it.updated = now_(); save_(t, it);
+    if (it.msg_id) editChannel_(it.msg_id, (hired ? &#x27;✅ این آگهی تکمیل شد (استخدام انجام شد)&#x27; : &#x27;🔒 این آگهی بسته شد&#x27;) + &#x27;\n\n&#x27; + itemPostText_(it));
+    cacheDrop_();
+    return {ok:true, status:&#x27;closed&#x27;};
+  }
+  if (it.status === &#x27;closed&#x27;) {
+    it.reason = &#x27;&#x27;; it.updated = now_();
+    if (it.msg_id) { it.status = &#x27;approved&#x27;; editChannel_(it.msg_id, itemPostText_(it)); save_(t, it); cacheDrop_(); return {ok:true, status:&#x27;approved&#x27;}; }
+    it.status = &#x27;pending&#x27;; save_(t, it); notifyAdminsItem_(it, u);
+    return {ok:true, status:&#x27;pending&#x27;};
+  }
+  if (it.status === &#x27;approved&#x27;) { it.updated = now_(); save_(t, it); cacheDrop_(); return {ok:true, status:&#x27;approved&#x27;, renewed:true}; }
+  return {ok:false, error:&#x27;status&#x27;};
+}
+
+/* ----- وضعیت صندوق و ذخیره‌شده‌ها (JSON کوچک روی ردیف کاربر؛ ستون state) ----- */
+function userState_(u) {
+  var s = parseJ_(u &amp;&amp; u.state, {}); if (!s || typeof s !== &#x27;object&#x27;) s = {};
+  var inbox = (s.inbox &amp;&amp; typeof s.inbox === &#x27;object&#x27; &amp;&amp; !(s.inbox instanceof Array)) ? s.inbox : {};
+  var saved = (s.saved instanceof Array) ? s.saved.filter(function(x){ return typeof x === &#x27;string&#x27; &amp;&amp; x; }) : [];
+  return {inbox:inbox, saved:saved};
+}
+function saveState_(t, u, st) {
+  var ids = Object.keys(st.inbox); if (ids.length &gt; 300) ids.slice(0, ids.length - 300).forEach(function(k){ delete st.inbox[k]; });
+  u.state = JSON.stringify({inbox:st.inbox, saved:st.saved.slice(0, 200)}); save_(t, u);
+}
+var INBOX_STATES = [&#x27;read&#x27;, &#x27;contacted&#x27;, &#x27;declined&#x27;];
+function inboxState_(d) {
+  var t = table_(S_USERS), u = authIn_(t, d); if (!u) return {ok:false, error:&#x27;auth&#x27;};
+  var id = String(d.id || &#x27;&#x27;), it = find_(S_LIST, &#x27;id&#x27;, id), ad = it ? find_(S_LIST, &#x27;id&#x27;, it.target) : null;
+  if (!it || it.vis !== &#x27;direct&#x27; || !ad || ad.owner !== u.mobile) return {ok:false, error:&#x27;notfound&#x27;};
+  var s = d.state ? String(d.state) : &#x27;&#x27;;
+  if (s &amp;&amp; INBOX_STATES.indexOf(s) &lt; 0) return {ok:false, error:&#x27;state&#x27;};
+  var st = userState_(u);
+  if (s) st.inbox[id] = s; else delete st.inbox[id];
+  saveState_(t, u, st);
+  return {ok:true, inbox:st.inbox};
+}
+function savedSync_(d) {
+  var t = table_(S_USERS), u = authIn_(t, d); if (!u) return {ok:false, error:&#x27;auth&#x27;};
+  var st = userState_(u), clean = function(a){ return (a instanceof Array ? a : []).map(function(x){ return String(x == null ? &#x27;&#x27; : x).slice(0, 40); }).filter(String).slice(0, 200); };
+  var add = clean(d.saved), rm = clean(d.remove), out = [];
+  add.concat(st.saved).forEach(function(x){ if (rm.indexOf(x) &lt; 0 &amp;&amp; out.indexOf(x) &lt; 0) out.push(x); });
+  st.saved = out.slice(0, 200);
+  saveState_(t, u, st);
+  return {ok:true, saved:st.saved};
+}
+
+/* ----- آمار پنل ----- */
+function stats_(users, rows) {
+  var days = [], idx = {}, k;
+  for (k = 13; k &gt;= 0; k--) { var ds = Utilities.formatDate(new Date(new Date().getTime() - k * 86400000), TZ, &#x27;yyyy-MM-dd&#x27;); idx[ds] = days.length; days.push({d:ds, u:0, a:0, c:0}); }
+  users.forEach(function(u){ var i = idx[String(u.created || &#x27;&#x27;).slice(0, 10)]; if (i != null) days[i].u++; });
+  var med = function(a){ if (!a.length) return 0; a.sort(function(x, y){ return x - y; }); return Math.round(a[Math.floor(a.length / 2)]); };
+  var uMin = [], iMin = [], ur = 0, ua = 0, ir = 0, ia = 0;
+  users.forEach(function(u){
+    if (u.status === &#x27;rejected&#x27; || u.status === &#x27;blocked&#x27;) ur++;
+    if (u.status === &#x27;approved&#x27;) { ua++; var a = ms_(u.approved_at), c = ms_(u.created); if (a &amp;&amp; c &amp;&amp; a &gt; c &amp;&amp; a - c &lt; 7 * 86400000) uMin.push((a - c) / 60000); }
+  });
+  rows.forEach(function(r){
+    if (r.type !== &#x27;employer&#x27; &amp;&amp; r.type !== &#x27;jobseeker&#x27;) return;
+    var i = idx[String(r.created || &#x27;&#x27;).slice(0, 10)];
+    if (i != null &amp;&amp; r.src !== &#x27;channel&#x27;) { if (r.type === &#x27;employer&#x27;) days[i].a++; else days[i].c++; }
+    if (r.status === &#x27;rejected&#x27;) ir++;
+    if (r.status === &#x27;approved&#x27; &amp;&amp; r.src === &#x27;app&#x27;) { ia++; var a2 = ms_(r.updated), c2 = ms_(r.created); if (a2 &amp;&amp; c2 &amp;&amp; a2 &gt; c2 &amp;&amp; a2 - c2 &lt; 7 * 86400000) iMin.push((a2 - c2) / 60000); }
+  });
+  var pct = function(x, y){ return x + y ? Math.round(100 * x / (x + y)) : 0; };
+  return {days:days, userRejectPct:pct(ur, ua), itemRejectPct:pct(ir, ia), medUserMin:med(uMin), medItemMin:med(iMin), members:ua, rejectedUsers:ur};
+}
+
+/* =========================== فید عمومی =========================== */
+function feed_() {
+  var c = CacheService.getScriptCache(), hit = c.get(&#x27;feed2&#x27;);
+  if (hit) return JSON.parse(hit);
+  var owners = {};
+  var out = table_(S_LIST).rows.filter(function(r){
+    if (!r.id || r.id === &#x27;id&#x27; || r.deleted === &#x27;بله&#x27; || (r.type !== &#x27;employer&#x27; &amp;&amp; r.type !== &#x27;jobseeker&#x27;)) return false;
+    var st = r.status || &#x27;&#x27;;
+    if (st !== &#x27;approved&#x27; &amp;&amp; st !== &#x27;&#x27;) return false;
+    if (r.type === &#x27;jobseeker&#x27; &amp;&amp; r.public !== &#x27;بله&#x27;) return false;
+    return String(r.text || &#x27;&#x27;).length &gt; 5;
+  }).map(function(r){ return {id:r.id, type:r.type, title:r.title || titleFromText_(r.text), text:r.text, cat:r.cat, city:r.city || cityOf_(r.text),
+    created:r.created || tsFromId_(r.id), src:r.src || &#x27;&#x27;, dm:!!r.owner, msg:r.msg_id || &#x27;&#x27;}; }).reverse().slice(0, 400);
+  try { c.put(&#x27;feed2&#x27;, JSON.stringify(out), 60); } catch (e) {}
+  return out;
+}
+function cacheDrop_() { try { CacheService.getScriptCache().remove(&#x27;feed2&#x27;); } catch (e) {} }
+
+/* =========================== نصب / مهاجرت =========================== */
+/** یک بار Run کن. شیت‌ها را می‌سازد، داده‌های قبلی را منتقل می‌کند و تریگر دقیقه‌ای را نصب می‌کند. */
+function setup() {
+  var log = [];
+  [S_LIST, S_USERS, S_NOTIF, S_ADMINS].forEach(function(n){ ensureSheet_(n); });
+  // ۱) فهرست: ردیف‌های قدیمی
+  var t = table_(S_LIST), fixed = 0, members = {};
+  t.rows.forEach(function(r){
+    var dirty = false;
+    if (r.id === &#x27;id&#x27; &amp;&amp; r.type === &#x27;type&#x27;) { if (r.deleted !== &#x27;بله&#x27;) { r.deleted = &#x27;بله&#x27;; dirty = true; } }
+    else if (r.type === &#x27;membership&#x27;) {
+      var m = normMobile_(r.id) || normMobile_(r.text);
+      if (m) { members[m] = members[m] || {names:[], ok:false, rows:[]}; members[m].rows.push(r);
+        if (r.title &amp;&amp; r.title !== &#x27;تأیید&#x27;) members[m].names.push(String(r.title).trim()); if (r.public === &#x27;تأیید&#x27; &amp;&amp; r.deleted !== &#x27;بله&#x27;) members[m].ok = true;
+        if (r.deleted !== &#x27;بله&#x27; &amp;&amp; r.public !== &#x27;تأیید&#x27; &amp;&amp; r.public !== &#x27;در انتظار&#x27;) {} }
+    } else {
+      if (!r.status &amp;&amp; r.deleted !== &#x27;بله&#x27;) { r.status = &#x27;approved&#x27;; dirty = true; }
+      if (!r.cat) { r.cat = normCats_(r.tags + &#x27; &#x27; + r.text).join(&#x27; &#x27;); dirty = true; }
+      if (!r.city) { r.city = cityOf_(r.text); dirty = true; }
+      if (!r.created) { r.created = tsFromId_(r.id); dirty = true; }
+      if (!r.vis) { r.vis = (r.type === &#x27;employer&#x27; || r.public === &#x27;بله&#x27;) ? &#x27;channel&#x27; : &#x27;admin&#x27;; dirty = true; }
+      if (!r.title &amp;&amp; r.text) { r.title = titleFromText_(r.text); dirty = true; }
+    }
+    if (dirty) { save_(t, r); fixed++; }
+  });
+  log.push(&#x27;ردیف‌های فهرست به‌روز شد: &#x27; + fixed);
+  // ۲) عضویت‌ها → کاربران (و حذف ردیف‌های تکراری «تأیید»)
+  var ut = table_(S_USERS), made = 0;
+  Object.keys(members).forEach(function(m){
+    var g = members[m], u = findIn_(ut, &#x27;mobile&#x27;, m);
+    if (!u) { u = {mobile:m, name:g.names[g.names.length - 1] || &#x27;&#x27;, role:&#x27;&#x27;, status:g.ok ? &#x27;approved&#x27; : &#x27;pending&#x27;, created:now_(), link_code:rand_(10)}; made++; }
+    else if (g.ok &amp;&amp; u.status === &#x27;pending&#x27;) u.status = &#x27;approved&#x27;;
+    if (!u.name &amp;&amp; g.names.length) u.name = g.names[g.names.length - 1];
+    if (u.status === &#x27;approved&#x27; &amp;&amp; !u.approved_at) u.approved_at = now_();
+    save_(ut, u);
+    var allDeleted = g.rows.every(function(r){ return r.deleted === &#x27;بله&#x27;; });
+    if (allDeleted &amp;&amp; !g.ok) { u.status = &#x27;rejected&#x27;; save_(ut, u); }
+    else legacyMemberRow_(u);
+  });
+  log.push(&#x27;کاربر ساخته شد: &#x27; + made);
+  // ۳) تلگرام: وبهوک خاموش (برای getUpdates) و نام ربات
+  var p = PropertiesService.getScriptProperties();
+  if (!p.getProperty(&#x27;BOT_TOKEN&#x27;)) log.push(&#x27;⚠️ BOT_TOKEN در Script Properties نیست!&#x27;);
+  tg_(&#x27;deleteWebhook&#x27;, {drop_pending_updates:false});
+  p.deleteProperty(&#x27;BOT_USERNAME&#x27;);
+  log.push(&#x27;ربات: @&#x27; + botName_());
+  if (!p.getProperty(&#x27;ADMIN_LINK&#x27;)) p.setProperty(&#x27;ADMIN_LINK&#x27;, rand_(12));
+  log.push(&#x27;لینک ادمین تلگرام (روی گوشی باز کن و Start بزن): &#x27; + botLink_(&#x27;adm_&#x27; + p.getProperty(&#x27;ADMIN_LINK&#x27;)));
+  if (!p.getProperty(&#x27;ADMIN_MOBILES&#x27;)) p.setProperty(&#x27;ADMIN_MOBILES&#x27;, OWNER_MOBILES.join(&#x27;,&#x27;));
+  log.push(&#x27;ادمین‌های اپ (موبایل): &#x27; + adminMobiles_().join(&#x27;، &#x27;) + &#x27; — ادمین‌های بیشتر را از پنل ادمین ▸ ⋮ ▸ «مدیریت ادمین‌ها» اضافه کن&#x27;);
+  log.push(smsOn_() ? (&#x27;پیامک فعال: &#x27; + (smsCfg_().relay ? &#x27;relay&#x27; : smsCfg_().provider) + &#x27; (سقف روزانه &#x27; + smsCfg_().cap + &#x27;)&#x27;) : &#x27;پیامک: هنوز تنظیم نشده (ورود فقط با تلگرام)&#x27;);
+  // ۴) تریگر دقیقه‌ای
+  ScriptApp.getProjectTriggers().forEach(function(tr){ if (tr.getHandlerFunction() === &#x27;tick&#x27;) ScriptApp.deleteTrigger(tr); });
+  ScriptApp.newTrigger(&#x27;tick&#x27;).timeBased().everyMinutes(1).create();
+  log.push(&#x27;تریگر هر ۱ دقیقه نصب شد&#x27;);
+  p.setProperty(&#x27;SETUP_AT&#x27;, now_());
+  cacheDrop_();
+  Logger.log(log.join(&#x27;\n&#x27;));
+  return log;
+}
+
+function ensureSheet_(name) {
+  var ss = SpreadsheetApp.getActive(), sh = ss.getSheetByName(name), hdr = H[name];
+  if (!sh) sh = ss.insertSheet(name);
+  var lastCol = Math.max(sh.getLastColumn(), 1);
+  var cur = sh.getLastRow() ? sh.getRange(1, 1, 1, lastCol).getValues()[0] : [];
+  if (!sh.getLastRow()) { sh.appendRow(hdr); cur = hdr.slice(); }
+  for (var i = 0; i &lt; hdr.length; i++) if (String(cur[i] || &#x27;&#x27;) !== hdr[i]) sh.getRange(1, i + 1).setValue(hdr[i]);
+  (TEXT_COLS[name] || []).forEach(function(c){ sh.getRange(1, hdr.indexOf(c) + 1, sh.getMaxRows(), 1).setNumberFormat(&#x27;@&#x27;); });
+  sh.setFrozenRows(1);
+  return sh;
+}
+
+/* =========================== جدول‌ها =========================== */
+var _T = {};
+function table_(name) {
+  if (_T[name]) return _T[name];
+  var ss = SpreadsheetApp.getActive(), sh = ss.getSheetByName(name);
+  if (!sh) sh = ensureSheet_(name);
+  var hdr = H[name], vals = sh.getDataRange().getValues(), rows = [];
+  if (!vals.length || String(vals[0][0]) !== hdr[0] || vals[0].length &lt; hdr.length) { sh = ensureSheet_(name); vals = sh.getDataRange().getValues(); }
+  for (var i = 1; i &lt; vals.length; i++) {
+    var o = {_row:i + 1};
+    for (var j = 0; j &lt; hdr.length; j++) { var v = vals[i][j]; o[hdr[j]] = v === undefined || v === null ? &#x27;&#x27; : (isDate_(v) ? cellDate_(v) : String(v)); }
+    if (name === S_USERS) o.mobile = normMobile_(o.mobile) || o.mobile;
+    if (name === S_LIST &amp;&amp; o.owner) o.owner = normMobile_(o.owner) || o.owner;
+    if (name === S_NOTIF &amp;&amp; /^\d{10}$/.test(o.to)) o.to = &#x27;0&#x27; + o.to;
+    rows.push(o);
+  }
+  _T[name] = {name:name, sh:sh, hdr:hdr, rows:rows};
+  return _T[name];
+}
+function save_(t, o) {
+  var vals = [t.hdr.map(function(h){ return cell_(o[h]); })];
+  if (o._row) t.sh.getRange(o._row, 1, 1, t.hdr.length).setValues(vals);
+  else { t.sh.appendRow(vals[0]); o._row = t.sh.getLastRow(); t.rows.push(o); }
+  return o;
+}
+function cell_(v) { // متنی که با = + - شروع شود را شیت فرمول/عدد حساب می‌کند
+  if (v === undefined || v === null) return &#x27;&#x27;;
+  v = String(v);
+  return /^[=+\-@]/.test(v) ? &quot;&#x27;&quot; + v : v;
+}
+function findIn_(t, col, val) { val = String(val == null ? &#x27;&#x27; : val); if (!val) return null; for (var i = 0; i &lt; t.rows.length; i++) if (String(t.rows[i][col]) === val) return t.rows[i]; return null; }
+function find_(name, col, val) { return findIn_(table_(name), col, val); }
+function auth_(d) { return authIn_(table_(S_USERS), d); }
+function authIn_(t, d) {
+  var tok = String((d &amp;&amp; d.token) || &#x27;&#x27;); if (tok.length &lt; 16) return null;
+  for (var i = 0; i &lt; t.rows.length; i++) if ((&#x27; &#x27; + t.rows[i].tokens + &#x27; &#x27;).indexOf(&#x27; &#x27; + tok + &#x27; &#x27;) &gt;= 0) return t.rows[i];
+  return null;
+}
+function locked_(fn) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(25000);
+  _T = {}; // داده‌ی تازه زیر قفل
+  try { return fn(); } finally { lock.releaseLock(); }
+}
+
+/* =========================== پیامک (OTP) ===========================
+ * کلیدها فقط در Script Properties (Project Settings ▸ Script properties) نگه داشته می‌شوند، هرگز در کد:
+ *   SMS_PROVIDER  = ghasedak | kavenegar          (پیش‌فرض ghasedak)
+ *   SMS_API_KEY   = کلید وب‌سرویس
+ *   SMS_TEMPLATE  = نام قالب (الگو) اعتبارسنجی در پنل
+ *   SMS_PARAM     = نام پارامتر قالب (فقط قاصدک؛ پیش‌فرض Code)
+ *   SMS_DAILY_CAP = سقف پیامک در روز (پیش‌فرض ۳۰۰)
+ *   SMS_RELAY_URL / SMS_RELAY_SECRET = اگر ارسال مستقیم از گوگل مسدود بود، آدرس رله (relay/sms-relay.js)
+ * تا وقتی تنظیم نشده، همه‌چیز مثل قبل با تلگرام کار می‌کند و features.sms برنمی‌گردد.
+ */
+var SMS_TTL = 300, SMS_RESEND = 60, SMS_HOURLY = 5, SMS_TRIES = 5, SMS_DEFAULT_CAP = 300, SMS_BURST = 40;
+
+function smsCfg_() {
+  var p = PropertiesService.getScriptProperties(), g = function(k){ return String(p.getProperty(k) || &#x27;&#x27;).trim(); };
+  return {provider:(g(&#x27;SMS_PROVIDER&#x27;) || &#x27;ghasedak&#x27;).toLowerCase(), key:g(&#x27;SMS_API_KEY&#x27;), template:g(&#x27;SMS_TEMPLATE&#x27;), param:g(&#x27;SMS_PARAM&#x27;) || &#x27;Code&#x27;,
+    relay:g(&#x27;SMS_RELAY_URL&#x27;), relaySecret:g(&#x27;SMS_RELAY_SECRET&#x27;), cap:Number(g(&#x27;SMS_DAILY_CAP&#x27;)) &gt; 0 ? Math.floor(Number(g(&#x27;SMS_DAILY_CAP&#x27;))) : SMS_DEFAULT_CAP};
+}
+function smsOn_() {
+  var c = smsCfg_();
+  if (c.relay) return /^https:\/\//.test(c.relay) &amp;&amp; c.relaySecret.length &gt;= 12;
+  return (c.provider === &#x27;ghasedak&#x27; || c.provider === &#x27;kavenegar&#x27;) &amp;&amp; !!c.key &amp;&amp; !!c.template;
+}
+function features_() {
+  var f = {}; Object.keys(FEATURES).forEach(function(k){ f[k] = FEATURES[k]; });
+  if (smsOn_()) f.sms = 1;
+  return f;
+}
+/** کد ۵ رقمی از تولیدکننده‌ی تصادفیِ UUID (Math.random برای کد ورود مناسب نیست). */
+function smsCode_() {
+  var h = Utilities.getUuid().replace(/-/g, &#x27;&#x27;);
+  return String(10000 + (parseInt(h.slice(0, 8), 16) % 90000));
+}
+/** مقایسه‌ی زمان‌ثابت دو رشته. */
+function ctEq_(a, b) {
+  a = String(a == null ? &#x27;&#x27; : a); b = String(b == null ? &#x27;&#x27; : b);
+  var d = a.length ^ b.length, n = Math.max(a.length, b.length);
+  for (var i = 0; i &lt; n; i++) d |= (a.charCodeAt(i % (a.length || 1)) || 0) ^ (b.charCodeAt(i % (b.length || 1)) || 0);
+  return d === 0;
+}
+function smsDay_() {
+  var p = PropertiesService.getScriptProperties(), day = now_().slice(0, 10), raw = String(p.getProperty(&#x27;SMS_DAY&#x27;) || &#x27;&#x27;), m = raw.match(/^(\d{4}-\d{2}-\d{2}):(\d+)$/);
+  return {day:day, n:(m &amp;&amp; m[1] === day) ? Number(m[2]) : 0};
+}
+function smsDaySet_(day, n) { PropertiesService.getScriptProperties().setProperty(&#x27;SMS_DAY&#x27;, day + &#x27;:&#x27; + Math.max(0, n)); }
+function smsOnce_(prop, text) { // یک‌بار در روز به ادمین‌ها خبر بده
+  var p = PropertiesService.getScriptProperties(), day = now_().slice(0, 10);
+  if (p.getProperty(prop) === day) return;
+  p.setProperty(prop, day);
+  try { notifyAdminsInfo_(text, &#x27;private&#x27;); } catch (e) {}
+}
+
+/** زیر قفل صدا زده شود. محدودیت‌ها را می‌سنجد، شمارنده‌ها را رزرو می‌کند و کد را در کش می‌گذارد (کد هرگز برگردانده/لاگ نمی‌شود). */
+function smsReserve_(mobile) {
+  var cache = CacheService.getScriptCache(), nowMs = new Date().getTime(), c = smsCfg_();
+  var last = Number(cache.get(&#x27;ss_&#x27; + mobile) || 0);
+  if (last &amp;&amp; nowMs - last &lt; SMS_RESEND * 1000) return {ok:false, error:&#x27;sms_wait&#x27;, wait:Math.ceil((SMS_RESEND * 1000 - (nowMs - last)) / 1000)};
+  var hist = parseJ_(cache.get(&#x27;sh_&#x27; + mobile), []).filter(function(t){ return nowMs - t &lt; 3600000; });
+  if (hist.length &gt;= SMS_HOURLY) return {ok:false, error:&#x27;sms_hour&#x27;, wait:Math.max(1, Math.ceil((hist[0] + 3600000 - nowMs) / 1000))};
+  var bk = &#x27;sg_&#x27; + Math.floor(nowMs / 600000), burst = Number(cache.get(bk) || 0);
+  if (burst &gt;= SMS_BURST) return {ok:false, error:&#x27;sms_busy&#x27;, wait:60};
+  var dy = smsDay_();
+  if (dy.n &gt;= c.cap) { smsOnce_(&#x27;SMS_CAPALERT&#x27;, &#x27;⚠️ سقف پیامک امروز (&#x27; + c.cap + &#x27;) پر شد؛ ورود با پیامک تا فردا غیرفعال است و کاربران با تلگرام وارد می‌شوند.&#x27;); return {ok:false, error:&#x27;sms_cap&#x27;}; }
+  var code = smsCode_();
+  cache.put(&#x27;ss_&#x27; + mobile, String(nowMs), SMS_RESEND);
+  hist.push(nowMs); cache.put(&#x27;sh_&#x27; + mobile, JSON.stringify(hist), 3600);
+  cache.put(bk, String(burst + 1), 700);
+  cache.put(&#x27;sc_&#x27; + mobile, JSON.stringify({c:code, e:nowMs + SMS_TTL * 1000}), SMS_TTL + 30);
+  cache.remove(&#x27;lc_&#x27; + mobile); cache.put(&#x27;lt_&#x27; + mobile, &#x27;0&#x27;, 600); // کد جدید = ۵ تلاش جدید؛ کد تلگرامی قبلی باطل
+  smsDaySet_(dy.day, dy.n + 1);
+  return {ok:true, code:code};
+}
+/** بیرون از قفل: ارسال واقعی. اگر شکست خورد، رزرو را برمی‌گرداند. */
+function smsDeliver_(mobile, code) {
+  var r = smsSend_(mobile, code);
+  if (r.ok) { try { PropertiesService.getScriptProperties().setProperty(&#x27;SMS_OK&#x27;, now_()); } catch (e) {} return r; }
+  locked_(function(){
+    var cache = CacheService.getScriptCache(), dy = smsDay_();
+    cache.remove(&#x27;sc_&#x27; + mobile); cache.remove(&#x27;ss_&#x27; + mobile);
+    smsDaySet_(dy.day, dy.n - 1); // پیامکی که تحویل ارائه‌دهنده نشد هزینه‌ای ندارد
+    var msg = String(r.provider || &#x27;&#x27;) + &#x27; &#x27; + (r.status || &#x27;&#x27;) + &#x27; &#x27; + String(r.msg || &#x27;&#x27;).replace(/\d{4,}/g, &#x27;•&#x27;).slice(0, 120);
+    PropertiesService.getScriptProperties().setProperty(&#x27;SMS_ERR&#x27;, now_() + &#x27; | &#x27; + msg.trim());
+    smsOnce_(&#x27;SMS_ERRALERT&#x27;, &#x27;⚠️ ارسال پیامک ناموفق بود: &#x27; + msg.trim() + &#x27;\n(اگر اعتبار تمام شده شارژ کن، یا کلید/آی‌پی/قالب را در پنل ارائه‌دهنده بررسی کن.)&#x27;);
+  });
+  return r;
+}
+function smsErr_(provider, status, msg) { return {ok:false, error:&#x27;sms_fail&#x27;, provider:provider, status:status, msg:msg}; }
+/** ارسال کد با ارائه‌دهنده‌ی تنظیم‌شده. فقط ok/خطا برمی‌گرداند؛ کد و کلید هیچ‌جا لاگ نمی‌شوند. */
+function smsSend_(mobile, code) {
+  var c = smsCfg_(), res, body, status;
+  try {
+    if (c.relay) {
+      res = UrlFetchApp.fetch(c.relay, {method:&#x27;post&#x27;, contentType:&#x27;application/json&#x27;, muteHttpExceptions:true, followRedirects:true,
+        payload:JSON.stringify({secret:c.relaySecret, mobile:mobile, code:code})});
+      status = res.getResponseCode(); body = parseJ_(res.getContentText(), {});
+      return (status === 200 &amp;&amp; body &amp;&amp; body.ok === true) ? {ok:true} : smsErr_(&#x27;relay&#x27;, status, (body &amp;&amp; body.error) || &#x27;relay&#x27;);
+    }
+    if (c.provider === &#x27;ghasedak&#x27;) {
+      // https://doc.ghasedak.me — SendOtpSMS (قالب با پارامتر نام‌دار؛ بدون خط خدماتی)
+      res = UrlFetchApp.fetch(&#x27;https://gateway.ghasedak.me/rest/api/v1/WebService/SendOtpSMS&#x27;, {method:&#x27;post&#x27;, contentType:&#x27;application/json&#x27;, muteHttpExceptions:true,
+        headers:{ApiKey:c.key}, payload:JSON.stringify({receptors:[{mobile:mobile, clientReferenceId:uid_()}], templateName:c.template, inputs:[{param:c.param, value:code}]})});
+      status = res.getResponseCode(); body = parseJ_(res.getContentText(), {});
+      var okG = body &amp;&amp; (body.IsSuccess === true || body.isSuccess === true);
+      return (status === 200 &amp;&amp; okG) ? {ok:true} : smsErr_(&#x27;ghasedak&#x27;, body &amp;&amp; (body.StatusCode || body.statusCode) || status, (body &amp;&amp; (body.Message || body.message)) || (status === 401 ? &#x27;unauthorized (key / IP not allowed)&#x27; : &#x27;error&#x27;));
+    }
+    if (c.provider === &#x27;kavenegar&#x27;) {
+      // https://kavenegar.com/rest.html — verify/lookup (نیاز به «سرویس پیشرفته»)
+      res = UrlFetchApp.fetch(&#x27;https://api.kavenegar.com/v1/&#x27; + encodeURIComponent(c.key) + &#x27;/verify/lookup.json&#x27;, {method:&#x27;post&#x27;, muteHttpExceptions:true,
+        payload:{receptor:mobile, token:code, template:c.template}});
+      status = res.getResponseCode(); body = parseJ_(res.getContentText(), {});
+      var rt = body &amp;&amp; body[&#x27;return&#x27;];
+      return (rt &amp;&amp; Number(rt.status) === 200) ? {ok:true} : smsErr_(&#x27;kavenegar&#x27;, (rt &amp;&amp; rt.status) || status, (rt &amp;&amp; rt.message) || &#x27;error&#x27;);
+    }
+    return smsErr_(c.provider, 0, &#x27;provider not supported&#x27;);
+  } catch (e) {
+    return smsErr_(c.relay ? &#x27;relay&#x27; : c.provider, 0, String(e &amp;&amp; e.message || e).replace(/\/v1\/[^\/]+\//g, &#x27;/v1/***/&#x27;));
+  }
+}
+
+/** ارسال کد بعد از ساخت پاسخ زیر قفل (ctx.send = {mobile, code}). خروجی: شیء sms برای پاسخ. */
+function smsAfter_(ctx) {
+  if (!ctx || !ctx.send) return null;
+  var r = smsDeliver_(ctx.send.mobile, ctx.send.code);
+  return r.ok ? {sent:true, resend:SMS_RESEND, ttl:SMS_TTL} : {sent:false, error:&#x27;sms_fail&#x27;};
+}
+function smsReply_(rs, ctx, mobile) {
+  if (!rs.ok) return {sent:false, error:rs.error, wait:rs.wait || 0};
+  ctx.send = {mobile:mobile, code:rs.code};
+  return {sent:true, resend:SMS_RESEND, ttl:SMS_TTL};
+}
+
+/** بررسی کد (پیامکی یا تلگرامی). زیر قفل. */
+function codeCheck_(mobile, code) {
+  var cache = CacheService.getScriptCache(), tries = Number(cache.get(&#x27;lt_&#x27; + mobile) || 0);
+  if (!mobile || code.length !== 5) return {ok:false, error:&#x27;code&#x27;};
+  if (tries &gt;= SMS_TRIES) return {ok:false, error:&#x27;tries&#x27;};
+  var rec = parseJ_(cache.get(&#x27;sc_&#x27; + mobile), null), tg = cache.get(&#x27;lc_&#x27; + mobile), now = new Date().getTime();
+  var smsOk = !!(rec &amp;&amp; rec.e &gt; now) &amp;&amp; ctEq_(rec.c, code), tgOk = !!tg &amp;&amp; ctEq_(tg, code);
+  if (smsOk || tgOk) { cache.remove(&#x27;sc_&#x27; + mobile); cache.remove(&#x27;lc_&#x27; + mobile); cache.remove(&#x27;lt_&#x27; + mobile); return {ok:true, via:smsOk ? &#x27;sms&#x27; : &#x27;tg&#x27;}; }
+  if (!rec &amp;&amp; !tg) { cache.put(&#x27;lt_&#x27; + mobile, String(tries + 1), 600); return {ok:false, error:&#x27;code&#x27;}; }
+  if (rec &amp;&amp; rec.e &lt;= now &amp;&amp; !tg) { cache.remove(&#x27;sc_&#x27; + mobile); return {ok:false, error:&#x27;expired&#x27;}; }
+  cache.put(&#x27;lt_&#x27; + mobile, String(tries + 1), 600);
+  if (tries + 1 &gt;= SMS_TRIES) { cache.remove(&#x27;sc_&#x27; + mobile); cache.remove(&#x27;lc_&#x27; + mobile); return {ok:false, error:&#x27;tries&#x27;}; }
+  return {ok:false, error:&#x27;code&#x27;, left:SMS_TRIES - tries - 1};
+}
+/** شماره با پیامک تأیید شد. اگر ثبت‌نام تازه در انتظار تأیید پیامکی بود، حالا به ادمین‌ها خبر می‌رود. */
+function markVerified_(mobile) {
+  var t = table_(S_USERS), u = findIn_(t, &#x27;mobile&#x27;, mobile); if (!u) return null;
+  var was = u.verified; u.verified = &#x27;1&#x27;; save_(t, u);
+  if (was === &#x27;w&#x27;) { legacyMemberRow_(u); if (u.status === &#x27;pending&#x27;) notifyAdminsUser_(u, true); }
+  return u;
+}
+function vOk_(u) { return !!u.verified &amp;&amp; u.verified !== &#x27;w&#x27;; }
+
+function smsStatus_() {
+  var c = smsCfg_(), p = PropertiesService.getScriptProperties(), dy = smsDay_(), err = String(p.getProperty(&#x27;SMS_ERR&#x27;) || &#x27;&#x27;).split(&#x27; | &#x27;);
+  return {ok:true, configured:smsOn_(), provider:c.relay ? &#x27;relay&#x27; : c.provider, relay:!!c.relay, today:dy.n, cap:c.cap, lastOk:p.getProperty(&#x27;SMS_OK&#x27;) || &#x27;&#x27;,
+    lastError:err.length &gt; 1 ? err.slice(1).join(&#x27; | &#x27;) : &#x27;&#x27;, lastErrorAt:err.length &gt; 1 ? err[0] : &#x27;&#x27;, tg:tgStatus_()};
+}
+
+/* =========================== کمکی =========================== */
+function pubUser_(u) {
+  return {mobile:u.mobile, name:u.name, role:u.role, status:u.status, tg:!!u.tg_chat, tg_user:u.tg_user, verified:vOk_(u), needVerify:u.verified === &#x27;w&#x27;,
+    invite:u.status === &#x27;approved&#x27; ? u.invite : &#x27;&#x27;, interests:u.interests || &#x27;&#x27;, city:u.city || &#x27;&#x27;, tgLink:botLink_(&#x27;L&#x27; + u.link_code), isAdmin:isAdminUser_(u),
+    reason:(u.status === &#x27;rejected&#x27; || u.status === &#x27;blocked&#x27;) ? (u.reason || &#x27;&#x27;) : &#x27;&#x27;};
+}
+function addToken_(tokens, t) { var a = String(tokens || &#x27;&#x27;).split(&#x27; &#x27;).filter(String); a.push(t); return a.slice(-5).join(&#x27; &#x27;); }
+function toEn_(s) { return String(s || &#x27;&#x27;).replace(/[۰-۹]/g, function(c){ return String(c.charCodeAt(0) - 1776); }).replace(/[٠-٩]/g, function(c){ return String(c.charCodeAt(0) - 1632); }); }
+function normMobile_(s) {
+  var d = toEn_(String(s == null ? &#x27;&#x27; : s)).replace(/\D/g, &#x27;&#x27;);
+  var m = d.match(/(?:0098|98|0)?(9\d{9})/);
+  if (!m) return &#x27;&#x27;;
+  if (d.length &gt; 14) { var mm = toEn_(String(s)).match(/(?:\+98|0098|0)?9\d{9}/); if (!mm) return &#x27;&#x27;; return &#x27;0&#x27; + mm[0].replace(/\D/g, &#x27;&#x27;).slice(-10); }
+  return &#x27;0&#x27; + m[1];
+}
+function clean_(s, max, multi) {
+  s = String(s == null ? &#x27;&#x27; : s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, &#x27;&#x27;);
+  if (!multi) s = s.replace(/\s+/g, &#x27; &#x27;);
+  return s.trim().slice(0, max || 200);
+}
+function normCats_(s) {
+  s = String(s || &#x27;&#x27;); var out = [];
+  var tags = s.match(/#[^\s#،,]+/g) || [];
+  tags.forEach(function(tg){
+    var t = CAT_ALIASES[tg] || tg;
+    CATS.forEach(function(c){ if (c[0] === t &amp;&amp; out.indexOf(t) &lt; 0) out.push(t); });
+  });
+  if (!out.length) {
+    var plain = s.replace(/#[^\s]+/g, &#x27; &#x27;);
+    for (var i = 0; i &lt; CAT_WORDS.length &amp;&amp; out.length &lt; 2; i++) if (CAT_WORDS[i][1].test(plain) &amp;&amp; out.indexOf(CAT_WORDS[i][0]) &lt; 0) out.push(CAT_WORDS[i][0]);
+  }
+  if (s.indexOf(REMOTE) &gt;= 0 &amp;&amp; out.indexOf(REMOTE) &lt; 0) out.push(REMOTE);
+  return out.slice(0, 4);
+}
+function overlap_(a, cats) {
+  var A = String(a || &#x27;&#x27;).split(&#x27; &#x27;).filter(function(x){ return x &amp;&amp; x !== REMOTE; });
+  for (var i = 0; i &lt; cats.length; i++) if (cats[i] !== REMOTE &amp;&amp; A.indexOf(cats[i]) &gt;= 0) return true;
+  return false;
+}
+function cityOk_(a, b) {
+  a = String(a || &#x27;&#x27;).split(/[،,\s]/)[0]; b = String(b || &#x27;&#x27;).split(/[،,\s]/)[0];
+  if (!a || !b) return true;
+  return a === b || a.indexOf(&#x27;دورکار&#x27;) &gt;= 0 || b.indexOf(&#x27;دورکار&#x27;) &gt;= 0;
+}
+var CITY_RE = /(تهران|مشهد|اصفهان|شیراز|تبریز|کرج|قم|اهواز|رشت|کرمان|یزد|ساری|قزوین|ارومیه|همدان|دورکاری)/;
+function cityOf_(text) { var m = String(text || &#x27;&#x27;).match(CITY_RE); return m ? m[1] : &#x27;&#x27;; }
+function titleFromText_(text) {
+  var lines = String(text || &#x27;&#x27;).split(&#x27;\n&#x27;).map(function(l){ return l.trim(); }).filter(function(l){ return l &amp;&amp; !/^(#\S+\s*)+$/.test(l); });
+  for (var i = 0; i &lt; lines.length; i++) { var m = lines[i].match(/(?:عنوان شغل|عنوان)\s*[:：]\s*(.+)/); if (m) return m[1].slice(0, 80); }
+  var l = (lines[0] || &#x27;&#x27;).replace(/^[^\u0600-\u06FFA-Za-z0-9]+/, &#x27;&#x27;).replace(/#\S+/g, &#x27;&#x27;).trim();
+  return l.slice(0, 80);
+}
+function firstLines_(s, n) { return String(s || &#x27;&#x27;).split(&#x27;\n&#x27;).filter(function(l){ return l.trim(); }).slice(0, n).join(&#x27;\n&#x27;); }
+function roleFa_(r) { return r === &#x27;employer&#x27; ? &#x27;کارفرما&#x27; : (r === &#x27;jobseeker&#x27; ? &#x27;کارجو&#x27; : &#x27;نامشخص&#x27;); }
+function parseJ_(s, def) { try { return s ? JSON.parse(s) : def; } catch (e) { return def; } }
+function rand_(n) { var a = &#x27;abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789&#x27;, s = &#x27;&#x27;; for (var i = 0; i &lt; n; i++) s += a.charAt(Math.floor(Math.random() * a.length)); return s; }
+function uid_() { return new Date().getTime().toString(36) + rand_(4); }
+function now_() { return fmtDate_(new Date()); }
+/** Sheets parses the written text in the spreadsheet&#x27;s own timezone, so read it back with that same zone. */
+var _SSTZ = null;
+function cellDate_(d) { if (!_SSTZ) { try { _SSTZ = SpreadsheetApp.getActive().getSpreadsheetTimeZone() || TZ; } catch (e) { _SSTZ = TZ; } } return Utilities.formatDate(d, _SSTZ, &#x27;yyyy-MM-dd HH:mm:ss&#x27;); }
+function isDate_(v) { return Object.prototype.toString.call(v) === &#x27;[object Date]&#x27; &amp;&amp; !isNaN(v.getTime()); }
+function fmtDate_(d) { return Utilities.formatDate(d, TZ, &#x27;yyyy-MM-dd HH:mm:ss&#x27;); }
+function tsFromId_(id) { var n = Number(String(id).replace(/\D/g, &#x27;&#x27;).slice(0, 13)); return n &gt; 1.6e12 &amp;&amp; n &lt; 2.2e12 ? fmtDate_(new Date(n)) : &#x27;&#x27;; }
+function json_(obj) { return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
+</textarea>
+<script>var t=document.getElementById('t'),m=document.getElementById('m');document.getElementById('b').onclick=function(){t.select();t.setSelectionRange(0,9999999);var ok=false;try{ok=document.execCommand('copy')}catch(e){}
+if(navigator.clipboard){navigator.clipboard.writeText(t.value).then(function(){m.textContent='کپی شد ✅ حالا در Apps Script بچسبان'},function(){m.textContent=ok?'کپی شد ✅':'کپی نشد'})}else{m.textContent=ok?'کپی شد ✅':'کپی نشد'}};</script></body></html>
