@@ -25,6 +25,29 @@
       })(need.slice(i, i + 24));
     };
   })();
+  function pick(text, re) { var m = String(text || '').match(re); return m ? m[1].replace(/[*_]/g, '').trim().slice(0, 48) : ''; }
+  TY.jobCard = function (it, type) {
+    type = type || it.type;
+    var cats = String(it.cat || '').split(' ').filter(function (c) { return c && c !== '#دورکاری'; });
+    var t = it.text || '';
+    var co = type !== 'jobseeker' ? pick(t, /(?:فروشگاه \/ شرکت|شرکت|مجموعه)\s*:\s*([^\n]+)/) : '';
+    var sal = pick(t, /(?:حقوق(?: درخواستی)?|دستمزد)\s*:\s*([^\n]+)/);
+    var coop = pick(t, /نوع همکاری\s*:\s*([^\n]+)/);
+    var hot = /#فوری|فوری/.test(t.slice(0, 600)), remote = /#دورکاری/.test(it.cat || '') || /دورکاری/.test(coop);
+    var body = TY.cleanText(TY.bodyOf(t)).split('\n').filter(function (l) { l = l.trim(); return l && !/عنوان|حقوق|فروشگاه|شرکت\s*:|نوع همکاری|محل کار/.test(l) && !/:\s*$/.test(l) && !/^(صنعت|ساعت کاری)\s*:/.test(l) && l !== it.title && !/^(راه ارتباط|تماس|نام)\s*:/.test(l); }).map(function (l) { return l.replace(/^[•🔹]\s*/, ''); }).join(' · ');
+    var fresh = (Date.now() - (TY.parseDate(it.created) || 0)) < 36e5 * 24;
+    var ttl = it.title || 'بدون عنوان', ini = (co || ttl).replace(/^(شرکت|فروشگاه|استخدام)\s+/, '').trim().charAt(0) || 'ت';
+    var hc = 0; for (var i = 0; i < ttl.length; i++) hc = (hc + ttl.charCodeAt(i)) % 6;
+    var av = it.img ? '<span class="cth" data-th="' + TY.esc(it.id) + '" role="img" aria-label="کارت تصویری"></span>' : '<span class="av c' + (hc + 1) + '" aria-hidden="true">' + TY.esc(type === 'jobseeker' ? ini : ini) + '</span>';
+    return '<article class="item" tabindex="0" data-id="' + TY.esc(it.id) + '"><div class="top">' + av +
+      '<div class="grow" style="min-width:0"><div class="ttl">' + (fresh ? '<span class="new" title="تازه" style="display:inline-block;margin:0 0 2px 6px;vertical-align:middle"></span>' : '') + TY.esc(ttl) + '</div>' +
+      (co ? '<div class="co">' + TY.esc(TY.fa(co)) + '</div>' : '') +
+      '<div class="meta">' + (it.city ? '<span>' + TY.ic('pin', 'xs') + TY.esc(it.city) + '</span>' : '') + (sal ? '<span class="sal">' + TY.esc(TY.fa(sal)) + '</span>' : '') + '</div></div>' +
+      '<button class="savebtn" data-save aria-label="ذخیره" aria-pressed="' + TY.saved.has(it.id) + '">' + TY.ic('bookmark', 'sm') + '</button></div>' +
+      (body ? '<div class="snip">' + TY.esc(TY.fa(body)) + '</div>' : '') +
+      '<div class="foot">' + (hot ? '<span class="badge hot">فوری</span>' : '') + (remote ? '<span class="badge">دورکاری</span>' : '') + cats.slice(0, 2).map(function (c) { return '<span class="badge">' + TY.esc(TY.catName(c)) + '</span>'; }).join('') +
+      (type !== 'jobseeker' && it.dm ? '<span class="badge brand">ارسال مستقیم رزومه</span>' : '') + (it.created ? '<span class="when">' + TY.ago(it.created) + '</span>' : '') + '</div></article>';
+  };
   TY.feedPage = function (o) {
     var type = o.type, isSaved = type === 'saved';
     TY.shell({title: o.title, nav: o.nav, actions: ''});
@@ -35,7 +58,8 @@
       '<button class="btn outline" id="cityBtn" style="padding:0 12px" aria-label="فیلتر شهر">' + TY.ic('pin', 'sm') + '<span id="cityLbl">همه شهرها</span></button></div>' +
       '<div class="chips scroll" id="cats" role="tablist" aria-label="دسته‌ها"></div></div>' +
       '<p class="count" id="count"></p><div id="list" class="feed cols"></div>';
-    var state = {q: '', cat: '', city: '', items: []};
+    var state = {q: TY.qs('q') || '', cat: TY.qs('cat') || '', city: TY.qs('city') || '', items: []};
+    if (state.q) document.getElementById('q').value = state.q; if (state.city) document.getElementById('cityLbl').textContent = state.city;
     var listEl = document.getElementById('list');
 
     function source() {
@@ -56,18 +80,7 @@
       if (state.q) { var q = TY.norm(state.q).trim(); var hay = TY.norm((it.title || '') + ' ' + (it.text || '')); return q.split(/\s+/).every(function (w) { return hay.indexOf(w) >= 0; }); }
       return true;
     }
-    function card(it) {
-      var cats = String(it.cat || '').split(' ').filter(function (c) { return c && c !== '#دورکاری'; });
-      var body = TY.cleanText(TY.bodyOf(it.text)).split('\n').filter(function (l) { l = l.trim(); return l && !/عنوان/.test(l) && l !== it.title && !/^(راه ارتباط|تماس|نام)\s*:/.test(l); }).map(function (l) { return l.replace(/^•\s*/, ''); }).join(' · ');
-      var fresh = (Date.now() - (TY.parseDate(it.created) || 0)) < 36e5 * 24;
-      return '<article class="item" tabindex="0" data-id="' + TY.esc(it.id) + '"><div class="top">' + (fresh ? '<span class="new" title="تازه"></span>' : '') +
-        '<div class="ttl">' + TY.esc(it.title || 'بدون عنوان') + '</div>' + (it.img ? '<span class="cth" data-th="' + TY.esc(it.id) + '" role="img" aria-label="کارت تصویری"></span>' : '') +
-        '<button class="savebtn" data-save aria-label="ذخیره" aria-pressed="' + TY.saved.has(it.id) + '">' + TY.ic('bookmark', 'sm') + '</button></div>' +
-        '<div class="meta">' + (it.city ? '<span>' + TY.ic('pin', 'xs') + TY.esc(it.city) + '</span>' : '') + (it.created ? '<span>' + TY.ic('clock', 'xs') + TY.ago(it.created) + '</span>' : '') + '</div>' +
-        '<div class="snip">' + TY.esc(TY.fa(body)) + '</div>' +
-        '<div class="foot">' + cats.slice(0, 2).map(function (c) { return '<span class="badge">' + TY.esc(TY.catName(c)) + '</span>'; }).join('') +
-        (type !== 'jobseeker' && it.dm ? '<span class="badge brand">ارسال مستقیم رزومه</span>' : '') + '</div></article>';
-    }
+    function card(it) { return TY.jobCard(it, type); }
     function paint() {
       var rows = state.items.filter(match);
       var fk = state.q + '|' + state.cat + '|' + state.city; if (fk !== state.fk) { state.fk = fk; state.lim = 60; }

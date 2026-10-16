@@ -11,9 +11,9 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preload" href="assets/vazirmatn.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/app.css?v=2610112330">
+<link rel="stylesheet" href="assets/app.css?v=2610162100">
 <script>try{var t=JSON.parse(localStorage.getItem('ty2_theme')||'null');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
-<script src="assets/data.js?v=2610112330" defer></script><script src="assets/core.js?v=2610112330" defer></script>
+<script src="assets/data.js?v=2610112330" defer></script><script src="assets/core.js?v=2610112330" defer></script><script src="assets/feed.js?v=2610162100" defer></script>
 </head>
 <body>
 <main></main>
@@ -24,22 +24,36 @@ var main=$('main'), s=TY.session();
 function rowItem(it){return '<a class="row" href="'+(it.type==='jobseeker'?'resumes.html':'jobs.html')+'?id='+encodeURIComponent(it.id)+'"><span class="tile-ic">'+TY.ic(it.type==='jobseeker'?'resume':'briefcase','sm')+'</span><div class="grow"><div class="t">'+TY.esc(it.title||'آگهی')+'</div><div class="s">'+TY.esc([it.city,TY.ago(it.created)].filter(Boolean).join(' · '))+'</div></div>'+TY.ic('fwd','sm chev')+'</a>';}
 function skRows(n){var h='';for(var i=0;i<n;i++)h+='<div class="row"><span class="tile-ic sk"></span><div class="grow"><div class="sk" style="height:13px;width:60%"></div><div class="sk" style="height:11px;width:35%;margin-top:8px"></div></div></div>';return '<div class="list">'+h+'</div>';}
 function fillLatest(el,items,n){el.innerHTML=items.length?'<div class="list">'+items.slice(0,n).map(rowItem).join('')+'</div>':TY.empty('briefcase','هنوز موردی نیست','');}
+function jobsFeed(el,items,n){el.innerHTML=items.length?'<div class="feed">'+items.slice(0,n).map(function(it){return TY.jobCard(it,it.type);}).join('')+'</div>':TY.empty('briefcase','هنوز آگهی‌ای نیست','اولین آگهی را تو ثبت کن.');
+  if(TY.fillThumbs)TY.fillThumbs(el);
+  el.onclick=function(e){var sv=e.target.closest('[data-save]'),c=e.target.closest('.item');if(!c)return;var id=c.getAttribute('data-id'),it=items.filter(function(x){return String(x.id)===id})[0];
+    if(sv){if(!it)return;var on=TY.saved.toggle(it);sv.setAttribute('aria-pressed',on);TY.toast(on?'ذخیره شد':'از ذخیره‌ها برداشته شد');return;}
+    location.href=(it&&it.type==='jobseeker'?'resumes.html':'jobs.html')+'?id='+encodeURIComponent(id);};}
 function guest(){
-  main.innerHTML='<section class="hero"><div class="eyebrow">کانال آگهی‌های استخدام @JobVacencies</div>'+
-   '<h1 class="h1 mt2">هر کاری، آدمِ خودش را دارد.</h1>'+
-   '<p class="muted mt3" style="max-width:36ch">آگهی استخدام یا رزومه‌ات را رایگان ثبت کن. بعد از تأیید ادمین در کانال و برنامه منتشر می‌شود و آدم‌های همان رشته خبردار می‌شوند.</p>'+
-   '<div class="btnrow mt6" style="max-width:420px"><a class="btn primary lg" href="register.html">ثبت‌نام رایگان</a><a class="btn outline lg" href="register.html?login=1">ورود</a></div>'+
-   '<div class="stat"><div><b class="num" id="nAds">–</b><span>آگهی فعال</span></div><div><b class="num" id="nCv">–</b><span>رزومه‌ی عمومی</span></div><div><b class="num">۱٫۹ هزار</b><span>عضو کانال</span></div></div></section>'+
-   '<div class="section-h"><h2>تازه‌ترین آگهی‌ها</h2><a href="jobs.html">همه'+TY.ic('fwd','xs')+'</a></div><div id="latest">'+skRows(4)+'</div>'+
-   '<div class="section-h"><h2>شروع کن</h2></div><div class="list">'+
-   '<a class="row" href="employer.html"><span class="tile-ic brand">'+TY.ic('building','sm')+'</span><div class="grow"><div class="t">ثبت آگهی استخدام</div><div class="s">برای کارفرماها · رایگان</div></div>'+TY.ic('fwd','sm chev')+'</a>'+
-   '<a class="row" href="jobseeker.html"><span class="tile-ic brand">'+TY.ic('resume','sm')+'</span><div class="grow"><div class="t">ساخت رزومه</div><div class="s">برای کارجوها · در ۵ دقیقه</div></div>'+TY.ic('fwd','sm chev')+'</a>'+
+  var D=window.TY_DATA||{depts:[]};
+  main.innerHTML='<section class="hx"><div class="eyebrow">آگهی استخدام و رزومه · رایگان</div>'+
+   '<h1>هر کاری، آدمِ خودش را دارد.</h1><p>بین آگهی‌های تازه بگرد یا آگهی و رزومه‌ات را در چند دقیقه ثبت کن.</p>'+
+   '<form class="qbox" id="hqf" role="search"><label class="inputwrap"><span class="sr">جستجو</span>'+TY.ic('search','sm')+'<input id="hq" type="search" placeholder="عنوان شغل، مهارت یا شرکت…" enterkeyhint="search" autocomplete="off"></label><button class="btn primary">جستجو</button><div class="cityrow" id="hcity"></div></form>'+
+   '<div class="tstat"><div><b class="num" id="nAds">–</b><span>آگهی فعال</span></div><div><b class="num" id="nCv">–</b><span>رزومه‌ی عمومی</span></div><div><b class="num">۱٫۹ هزار</b><span>عضو کانال</span></div></div></section>'+
+   '<div class="section-h"><h2>کارفرما هستی یا کارجو؟</h2></div><div class="duo">'+
+   '<a class="emp" href="employer.html"><div class="k">کارفرما</div><div class="t">ثبت آگهی استخدام</div><div class="s">رایگان، با انتشار در کانال و اپ. رزومه‌های مرتبط مستقیم به تو می‌رسد.</div><span class="go">ثبت آگهی'+TY.ic('fwd','xs')+'</span></a>'+
+   '<a class="js" href="jobseeker.html"><div class="k">کارجو</div><div class="t">ساخت رزومه</div><div class="s">در ۵ دقیقه؛ حتی با آپلود فایل یا عکس رزومه. آگهی مرتبط فوری خبرت می‌کند.</div><span class="go">ساخت رزومه'+TY.ic('fwd','xs')+'</span></a></div>'+
+   '<div class="section-h"><h2>دسته‌های شغلی</h2><a href="jobs.html">همه'+TY.ic('fwd','xs')+'</a></div><div class="cats" id="hcats">'+D.depts.slice(0,8).map(function(d,i){return '<a href="jobs.html?cat='+encodeURIComponent(d.tag)+'"><span class="tile-ic brand">'+TY.ic(['megaphone','building','grid','users','sliders','inbox','star','briefcase'][i],'sm')+'</span>'+TY.esc(d.name.split(' و ')[0])+'</a>';}).join('')+'</div>'+
+   '<div class="section-h"><h2>تازه‌ترین آگهی‌ها</h2><a href="jobs.html">همه'+TY.ic('fwd','xs')+'</a></div><div id="latest">'+TY.skeleton(3)+'</div>'+
+   '<div class="section-h"><h2>چطور کار می‌کند؟</h2></div><div class="howto"><div><span><b>ثبت‌نام رایگان</b>با شماره موبایل، در کمتر از یک دقیقه.</span></div><div><span><b>ثبت آگهی یا رزومه</b>فرم ساده یا آپلود فایل؛ خودکار پر می‌شود.</span></div><div><span><b>بعد از تأیید، انتشار</b>در کانال و اپ منتشر می‌شود و افراد همان رشته خبردار می‌شوند.</span></div></div>'+
+   '<div class="btnrow mt4" style="max-width:420px"><a class="btn primary lg" href="register.html">ثبت‌نام رایگان</a><a class="btn outline lg" href="register.html?login=1">ورود</a></div>'+
+   '<div class="section-h"><h2>بیشتر</h2></div><div class="list">'+
    '<a class="row hide-in-app" href="app.html"><span class="tile-ic">'+TY.ic('download','sm')+'</span><div class="grow"><div class="t">نصب برنامه‌ی اندروید</div><div class="s">اعلان فوری آگهی‌ها و رزومه‌های مرتبط</div></div>'+TY.ic('fwd','sm chev')+'</a>'+
    '<a class="row" href="https://t.me/JobVacencies" target="_blank" rel="noopener"><span class="tile-ic">'+TY.ic('megaphone','sm')+'</span><div class="grow"><div class="t">کانال تلگرام</div><div class="s" dir="ltr" style="text-align:right">@JobVacencies</div></div>'+TY.ic('external','sm chev')+'</a></div>';
+  var city='';
+  $('#hqf').onsubmit=function(e){e.preventDefault();var q=$('#hq').value.trim(),u=[];if(q)u.push('q='+encodeURIComponent(q));if(city)u.push('city='+encodeURIComponent(city));location.href='jobs.html'+(u.length?'?'+u.join('&'):'');};
+  $('#hcity').onclick=function(e){var b=e.target.closest('[data-c]');if(!b)return;city=b.getAttribute('aria-pressed')==='true'?'':b.getAttribute('data-c');TY.$$('#hcity [data-c]').forEach(function(x){x.setAttribute('aria-pressed',x.getAttribute('data-c')===city&&!!city);});};
   var cached=TY.cachedFeed(); if(cached) paintFeed(cached);
-  TY.feed().then(paintFeed).catch(function(){});
+  TY.feed().then(paintFeed).catch(function(){ if(!cached) $('#latest').innerHTML=TY.empty('alert','اتصال برقرار نشد','اینترنت را چک کن و دوباره امتحان کن.'); });
   function paintFeed(items){var ads=items.filter(function(x){return x.type==='employer'}),cv=items.filter(function(x){return x.type==='jobseeker'});
-    $('#nAds').textContent=TY.fa(ads.length);$('#nCv').textContent=TY.fa(cv.length);fillLatest($('#latest'),ads,5);}
+    $('#nAds').textContent=TY.fa(ads.length);$('#nCv').textContent=TY.fa(cv.length);jobsFeed($('#latest'),ads,5);
+    var cc={};ads.forEach(function(a){if(a.city){var c=String(a.city).split(/[،,]/)[0].trim();cc[c]=(cc[c]||0)+1;}});
+    var top=Object.keys(cc).sort(function(a,b){return cc[b]-cc[a]}).slice(0,6);if(top.length)$('#hcity').innerHTML=top.map(function(c){return '<button type="button" data-c="'+TY.esc(c)+'" aria-pressed="false">'+TY.ic('pin','xs').replace('class="i xs"','class="i xs" style="display:inline;width:12px;height:12px;vertical-align:-1px;margin-left:3px"')+TY.esc(c)+'</button>';}).join('');}
 }
 function pending(me){
   var u=me.user, tg=u.tg;
@@ -65,7 +79,8 @@ function approved(me){
      '<a class="card" href="'+(emp?'employer.html':'jobseeker.html')+'" style="color:inherit"><span class="tile-ic brand">'+TY.ic(emp?'building':'resume','sm')+'</span><div class="h3 mt3">'+(emp?'ثبت آگهی':'ساخت رزومه')+'</div><div class="xs muted">'+(emp?'بعد از تأیید، در کانال':'انتشار یا ارسال مستقیم')+'</div></a>'+
      '<a class="card" href="'+(emp?'inbox.html?tab=inbox':'jobs.html')+'" style="color:inherit"><span class="tile-ic">'+TY.ic(emp?'inbox':'briefcase','sm')+'</span><div class="h3 mt3">'+(emp?'رزومه‌های دریافتی':'آگهی‌ها')+'</div><div class="xs muted num" id="adCnt">'+(emp?TY.fa((me.inbox||[]).length)+' رزومه':TY.fa(feed.filter(function(x){return x.type==='employer'}).length)+' آگهی فعال')+'</div></a></div>';
   if(u.isAdmin&&!emp){h+='<div class="grid2 mt3"><a class="card" href="employer.html" style="color:inherit"><span class="tile-ic brand">'+TY.ic('building','sm')+'</span><div class="h3 mt3">ثبت آگهی</div><div class="xs muted">بعد از تأیید، در کانال</div></a><a class="card" href="inbox.html?tab=inbox" style="color:inherit"><span class="tile-ic">'+TY.ic('inbox','sm')+'</span><div class="h3 mt3">رزومه‌های دریافتی</div><div class="xs muted num">'+TY.fa((me.inbox||[]).length)+' رزومه</div></a></div>';}
-  h+='<div class="section-h"><h2>مرتبط با تو</h2><a href="'+(emp?'resumes.html':'jobs.html')+'">همه'+TY.ic('fwd','xs')+'</a></div><div id="rel">'+skRows(3)+'</div>';
+  if(!emp) h+='<a class="hsearch" href="jobs.html">'+TY.ic('search','sm')+'جستجو در آگهی‌های استخدام…</a>';
+  h+='<div class="section-h"><h2>مرتبط با تو</h2><a href="'+(emp?'resumes.html':'jobs.html')+'">همه'+TY.ic('fwd','xs')+'</a></div><div id="rel">'+TY.skeleton(2)+'</div>';
   if((me.mine||[]).length) h+='<div class="section-h"><h2>ارسال‌های من</h2><a href="me.html#mine">همه'+TY.ic('fwd','xs')+'</a></div><div class="list">'+me.mine.slice(0,3).map(function(m){return '<a class="row" href="me.html#mine"><span class="tile-ic">'+TY.ic(m.type==='employer'?'briefcase':'resume','sm')+'</span><div class="grow"><div class="t">'+TY.esc(m.title||'بدون عنوان')+'</div><div class="s">'+TY.ago(m.created)+'</div></div>'+TY.statusBadge(m.status)+'</a>';}).join('')+'</div>';
   main.innerHTML=h;
   var igb=$('#intGo'); if(igb) igb.onclick=function(){var D=window.TY_DATA||{depts:[]},sel=[];
@@ -80,8 +95,8 @@ function approved(me){
     var rows=items.filter(function(x){return x.type===want;});
     var m=ints.length?rows.filter(function(x){return String(x.cat).split(' ').some(function(c){return ints.indexOf(c)>=0;});}):[];
     var el=$('#rel'); if(!el) return;
-    if(!m.length && ints.length){el.innerHTML='<p class="small muted" style="margin:0 2px 8px">فعلاً موردی در حوزه‌ی تو نیست؛ تازه‌ترین‌ها:</p>';var d=document.createElement('div');el.appendChild(d);fillLatest(d,rows,4);return;}
-    fillLatest(el,m.length?m:rows,5);
+    if(!m.length && ints.length){el.innerHTML='<p class="small muted" style="margin:0 2px 8px">فعلاً موردی در حوزه‌ی تو نیست؛ تازه‌ترین‌ها:</p>';var d=document.createElement('div');el.appendChild(d);jobsFeed(d,rows,4);return;}
+    jobsFeed(el,m.length?m:rows,5);
   }
   if(feed.length) rel(feed);
   TY.feed().then(rel).catch(function(){});
